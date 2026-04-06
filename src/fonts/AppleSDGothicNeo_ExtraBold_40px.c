@@ -3220,7 +3220,6 @@ lv_font_t AppleSDGothicNeo_ExtraBold_40px = {
     .underline_position = -7,
     .underline_thickness = 2,
 #endif
-    .static_bitmap = 0,
     .dsc = &font_dsc,          /*The custom font data. Will be accessed by `get_glyph_bitmap/dsc` */
 #if LV_VERSION_CHECK(8, 2, 0) || LVGL_VERSION_MAJOR >= 9
     .fallback = NULL,
