@@ -13,6 +13,11 @@ namespace {
     Button *g_button = nullptr;
     InputRouter *g_inputRouter = nullptr;
     AppController *g_app = nullptr;
+    HardwareSerial g_uart1(1);
+
+    constexpr uint32_t kUartCommandBaudRate = 115200;
+    constexpr int kUart1RxPin = 44;
+    constexpr int kUart1TxPin = 43;
 
     void onKnobLeftEventCallback(int count, void *usr_data)
     {
@@ -59,7 +64,8 @@ void setup()
 #endif
 
     const String title = "Airsplit Veil Panel";
-    Serial.begin(115200);
+    Serial.begin(kUartCommandBaudRate);
+    g_uart1.begin(kUartCommandBaudRate, SERIAL_8N1, kUart1RxPin, kUart1TxPin);
     Serial.println(title + " start");
 
     Serial.println("Initialize panel device");
@@ -107,7 +113,8 @@ void loop()
         return;
     }
 
-    g_inputRouter->pollSerial(Serial, Serial);
+    g_inputRouter->pollSerial(Serial, Serial, InputEventSource::Uart0);
+    g_inputRouter->pollSerial(g_uart1, g_uart1, InputEventSource::Uart1);
 
     InputEvent event{};
     while (g_inputRouter->dequeue(event)) {
@@ -116,5 +123,4 @@ void loop()
 
     g_app->update(millis());
     g_app->renderIfNeeded();
-    delay(5);
 }

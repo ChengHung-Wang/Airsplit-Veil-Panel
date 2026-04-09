@@ -13,6 +13,13 @@ enum class InputEventType : uint8_t {
     ModeWind,
 };
 
+enum class InputEventSource : uint8_t {
+    Local,
+    Uart0,
+    Uart1,
+};
+
 struct InputEvent {
     InputEventType type;
+    InputEventSource source = InputEventSource::Local;
 };
