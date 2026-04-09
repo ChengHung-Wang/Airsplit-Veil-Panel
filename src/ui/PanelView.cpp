@@ -5,10 +5,10 @@
 
 namespace {
 constexpr lv_coord_t kTemperatureCenterY = -2;
-constexpr lv_coord_t kWindCenterY = -55;
+constexpr lv_coord_t kWindCenterY = -25;
 constexpr lv_coord_t kIconY = 130;
 constexpr lv_coord_t kLightUnderlineY = 166;
-constexpr lv_coord_t kDotY = 176;
+constexpr lv_coord_t kDotY = -160;
 constexpr lv_coord_t kScaleY = 104;
 constexpr lv_coord_t kScaleX = 140;
 constexpr lv_coord_t kTemperatureArcSize = ESP_PANEL_LCD_HEIGHT;
@@ -126,14 +126,16 @@ void PanelView::begin()
     lv_obj_align(iconImage_, LV_ALIGN_CENTER, 0, kIconY);
     lv_obj_set_style_img_recolor_opa(iconImage_, LV_OPA_COVER, 0);
     lv_obj_set_style_transition(iconImage_, &transition, 0);
-
-    lightUnderline_ = lv_obj_create(screen_);
-    lv_obj_remove_style_all(lightUnderline_);
-    lv_obj_set_size(lightUnderline_, 96, 7);
-    lv_obj_align(lightUnderline_, LV_ALIGN_CENTER, 0, kLightUnderlineY);
-    lv_obj_set_style_bg_color(lightUnderline_, warmLightColor(), 0);
-    lv_obj_set_style_bg_opa(lightUnderline_, LV_OPA_COVER, 0);
-    lv_obj_set_style_radius(lightUnderline_, 0, 0);
+    
+    // The light mode underline design is removed in the current UI design, but we keep the code here for easy re-enable in the future if needed.
+    // --------
+    // lightUnderline_ = lv_obj_create(screen_);
+    // lv_obj_remove_style_all(lightUnderline_);
+    // lv_obj_set_size(lightUnderline_, 96, 7);
+    // lv_obj_align(lightUnderline_, LV_ALIGN_CENTER, 0, kLightUnderlineY);
+    // lv_obj_set_style_bg_color(lightUnderline_, warmLightColor(), 0);
+    // lv_obj_set_style_bg_opa(lightUnderline_, LV_OPA_COVER, 0);
+    // lv_obj_set_style_radius(lightUnderline_, 0, 0);
 
     for (uint8_t i = 0; i < 3; ++i) {
         fanDots_[i] = lv_obj_create(screen_);
@@ -186,7 +188,7 @@ void PanelView::setPowerOff(bool powerOff)
     setHidden(leftLabel_, powerOff);
     setHidden(rightLabel_, powerOff);
     setHidden(iconImage_, powerOff);
-    setHidden(lightUnderline_, powerOff);
+    // setHidden(lightUnderline_, powerOff);
     for (lv_obj_t *dot : fanDots_) {
         setHidden(dot, powerOff);
     }
@@ -209,7 +211,10 @@ void PanelView::renderTemperatureMode(
     setProgress(0.0f, false);
     setFanDots(0);
     setIcon(icon, iconColor);
-    setHidden(lightUnderline_, !showLightUnderline);
+
+    // The light mode underline design is removed in the current UI design, but we keep the code here for easy re-enable in the future if needed.
+    // --------
+    // setHidden(lightUnderline_, !showLightUnderline);
 }
 
 void PanelView::renderLightMode(const AppState &state)
@@ -232,7 +237,9 @@ void PanelView::renderWindMode(const AppState &state)
 {
     setTemperatureScaleVisible(false);
     setTemperatureArc(state.temperature, false);
-    setHidden(lightUnderline_, true);
+    // The light mode underline design is removed in the current UI design, but we keep the code here for easy re-enable in the future if needed.
+    // --------
+    // setHidden(lightUnderline_, true);
     setIcon(&wind_80x80, lv_color_white());
     setFanDots(state.fanLevel);
 
@@ -320,8 +327,12 @@ void PanelView::setTemperatureArc(int temperature, bool visible)
 
 void PanelView::setTemperatureScaleVisible(bool visible)
 {
-    setHidden(leftLabel_, !visible);
-    setHidden(rightLabel_, !visible);
+    // setHidden(leftLabel_, !visible);
+    // setHidden(rightLabel_, !visible);
+    
+    // For the current design we decided to hide the temperature scales labels.
+    setHidden(leftLabel_, true);
+    setHidden(rightLabel_, true);
 }
 
 void PanelView::animateArcTo(lv_obj_t *arc, int &currentValue, int targetValue, uint32_t durationMs)
