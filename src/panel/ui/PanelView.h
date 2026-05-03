@@ -2,7 +2,7 @@
 
 #include <lvgl.h>
 
-#include "app/AppState.h"
+#include "panel/app/AppState.h"
 
 class PanelView {
 public:

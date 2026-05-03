@@ -1,6 +1,6 @@
-#include "app/AppController.h"
+#include "panel/app/AppController.h"
 
-#include "lvgl_port_v8.h"
+#include "panel/lvgl_port_v8.h"
 
 namespace {
 constexpr uint32_t kBlinkIntervalMs = 500;

@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-#include "input/InputEvent.h"
-#include "input/UartCommandParser.h"
+#include "panel/input/InputEvent.h"
+#include "panel/input/UartCommandParser.h"
 
 class InputRouter {
 public:

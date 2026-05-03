@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-#include "input/InputEvent.h"
+#include "panel/input/InputEvent.h"
 
 class UartCommandParser {
 public:

@@ -1,7 +1,7 @@
-#include "../lvgl_port_v8.h"
-#include "ui/PanelView.h"
-#include "ui/UiAssets.h"
-#include "utils/TemperatureColorMapper.h"
+#include "panel/lvgl_port_v8.h"
+#include "panel/ui/PanelView.h"
+#include "panel/ui/UiAssets.h"
+#include "panel/utils/TemperatureColorMapper.h"
 
 namespace {
 constexpr lv_coord_t kTemperatureCenterY = -2;

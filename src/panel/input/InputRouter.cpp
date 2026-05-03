@@ -1,4 +1,4 @@
-#include "input/InputRouter.h"
+#include "panel/input/InputRouter.h"
 
 bool InputRouter::enqueue(const InputEvent &event)
 {

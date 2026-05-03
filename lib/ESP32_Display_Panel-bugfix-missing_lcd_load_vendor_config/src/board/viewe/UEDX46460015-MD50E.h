@@ -9,6 +9,12 @@
 // *INDENT-OFF*
 
 /* Set to 1 if using a custom board */
+#ifdef ESP_PANEL_USE_CUSTOM_BOARD
+
+#undef ESP_PANEL_USE_CUSTOM_BOARD
+
+#endif
+
 #define ESP_PANEL_USE_CUSTOM_BOARD       (1)         // 0/1
 
 #if ESP_PANEL_USE_CUSTOM_BOARD
