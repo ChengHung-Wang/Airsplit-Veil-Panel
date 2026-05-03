@@ -2,10 +2,10 @@
 
 #include <ESP_Panel_Library.h>
 
-#include "panel/app/AppState.h"
-#include "panel/app/SettingsStore.h"
-#include "panel/input/InputEvent.h"
-#include "panel/ui/PanelView.h"
+#include "AppState.h"
+#include "SettingsStore.h"
+#include "input/InputEvent.h"
+#include "ui/PanelView.h"
 
 class AppController {
 public:

@@ -1,4 +1,4 @@
-#include "panel/app/SettingsStore.h"
+#include "app/SettingsStore.h"
 
 void SettingsStore::begin()
 {

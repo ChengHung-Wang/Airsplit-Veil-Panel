@@ -1,4 +1,4 @@
-#include "panel/input/UartCommandParser.h"
+#include "input/UartCommandParser.h"
 
 String UartCommandParser::normalize(const char *command)
 {

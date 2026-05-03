@@ -5,7 +5,10 @@
 
 #include "app/AppController.h"
 #include "input/InputRouter.h"
-#include "lvgl_port_v8.h"
+#include "config/lvgl_port_v8.h"
+
+#include <WiFi.h>
+#include "esp_mac.h"
 
 namespace {
     ESP_Panel *g_panel = nullptr;
@@ -104,6 +107,36 @@ void setup()
     Serial.println("Create application");
     g_app->begin();
     Serial.println(title + " ready");
+
+    Serial.println("\n========================================");
+    Serial.println("       ESP32-C3 硬體 MAC 地址清單       ");
+    Serial.println("========================================");
+
+    uint8_t mac[6];
+    // 1. Wi-Fi Station (最常用於 ESP-NOW)
+    if (esp_read_mac(mac, ESP_MAC_WIFI_STA) == ESP_OK) {
+        Serial.printf("%-15s: %02X:%02X:%02X:%02X:%02X:%02X\r\n\r\n", 
+                      "Wi-Fi STA", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    }
+
+    // 2. Wi-Fi SoftAP (熱點模式)
+    if (esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP) == ESP_OK) {
+        Serial.printf("%-15s: %02X:%02X:%02X:%02X:%02X:%02X\r\n\r\n", 
+                      "Wi-Fi SoftAP", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    }
+
+    // 3. Bluetooth (BLE 模式)
+    if (esp_read_mac(mac, ESP_MAC_BT) == ESP_OK) {
+        Serial.printf("%-15s: %02X:%02X:%02X:%02X:%02X:%02X\r\n\r\n", 
+                      "Bluetooth/BLE", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    }
+
+    // 4. Ethernet (雖然 C3 無實體硬體，但底層仍有分配空間)
+    if (esp_read_mac(mac, ESP_MAC_ETH) == ESP_OK) {
+        Serial.printf("%-15s: %02X:%02X:%02X:%02X:%02X:%02X\r\n\r\n", 
+                      "Ethernet", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    }
+    Serial.println("========================================\r\n\r\n");   
 }
 
 void loop()

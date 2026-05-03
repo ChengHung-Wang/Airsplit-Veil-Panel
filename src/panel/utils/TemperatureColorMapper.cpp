@@ -1,6 +1,6 @@
-#include "panel/utils/TemperatureColorMapper.h"
+#include "TemperatureColorMapper.h"
 
-#include "panel/app/AppState.h"
+#include "app/AppState.h"
 
 namespace {
 constexpr uint8_t kCoolR = 0x82;

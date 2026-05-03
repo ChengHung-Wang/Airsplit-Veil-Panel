@@ -1,7 +1,7 @@
-#include "panel/lvgl_port_v8.h"
-#include "panel/ui/PanelView.h"
-#include "panel/ui/UiAssets.h"
-#include "panel/utils/TemperatureColorMapper.h"
+#include "config/lvgl_port_v8.h"
+#include "ui/PanelView.h"
+#include "ui/UiAssets.h"
+#include "utils/TemperatureColorMapper.h"
 
 namespace {
 constexpr lv_coord_t kTemperatureCenterY = -2;
@@ -166,7 +166,7 @@ void PanelView::render(const AppState &state)
         renderTemperatureMode(state.temperature, nullptr, lv_color_white(), false);
         setHidden(leftLabel_, true);
         setHidden(rightLabel_, true);
-        setHidden(temperatureArc_, true);
+        // setHidden(temperatureArc_, true);
         break;
     case AppMode::Light:
         renderLightMode(state);
