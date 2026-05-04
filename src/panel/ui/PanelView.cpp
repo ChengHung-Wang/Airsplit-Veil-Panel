@@ -219,12 +219,11 @@ void PanelView::renderTemperatureMode(
 
 void PanelView::renderLightMode(const AppState &state)
 {
-    const bool secondary = state.lightState == LightState::Secondary;
     renderTemperatureMode(
         state.temperature,
         &light_80x80,
-        secondary ? warmLightColor() : lv_color_white(),
-        secondary
+        state.lightEnabled ? warmLightColor() : lv_color_white(),
+        state.lightEnabled
     );
 }
 

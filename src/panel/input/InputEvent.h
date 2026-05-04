@@ -8,6 +8,7 @@ enum class InputEventType : uint8_t {
     SelectPress,
     PowerToggle,
     PowerOff,
+    StatusRequest,
     ModeLight,
     ModeWater,
     ModeWind,

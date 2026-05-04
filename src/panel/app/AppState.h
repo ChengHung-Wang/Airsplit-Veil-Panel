@@ -9,11 +9,6 @@ enum class AppMode : uint8_t {
     Wind,
 };
 
-enum class LightState : uint8_t {
-    Primary,
-    Secondary,
-};
-
 struct AppState {
     static constexpr int kMinTemperature = 20;
     static constexpr int kMaxTemperature = 45;
@@ -22,7 +17,7 @@ struct AppState {
 
     bool powerOn = true;
     AppMode currentMode = AppMode::Idle;
-    LightState lightState = LightState::Primary;
+    bool lightEnabled = false;
     int temperature = 25;
     uint32_t fanTimerSeconds = kDefaultFanTimerSeconds;
     uint32_t fanRemainingSeconds = kDefaultFanTimerSeconds;

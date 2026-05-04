@@ -23,6 +23,10 @@ bool UartCommandParser::parse(const char *command, InputEvent &event) const
         event.type = InputEventType::PowerOff;
         return true;
     }
+    if (normalized == "STATUS") {
+        event.type = InputEventType::StatusRequest;
+        return true;
+    }
     if (normalized == "LIGHT") {
         event.type = InputEventType::ModeLight;
         return true;
