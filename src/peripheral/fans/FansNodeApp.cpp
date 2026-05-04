@@ -234,6 +234,7 @@ bool FansNodeApp::sendToPanel(const mesh::MeshMessage &message)
 String FansNodeApp::statusString() const
 {
     String s;
+    char a[2000] = {};
     s += "ROLE=Fans,ID=1,RELAY=";
     s += relay_.isEnabled() ? "ON" : "OFF";
     s += ",ENABLE=";
@@ -242,6 +243,36 @@ String FansNodeApp::statusString() const
     s += ",RPM1=" + String(fan1_.rpm());
     s += ",F2=" + String(fan2_.dutyPercent()) + "%";
     s += ",RPM2=" + String(fan2_.rpm());
+
+    uint8_t mac[6];
+    // 1. Wi-Fi Station (最常用於 ESP-NOW)
+    if (esp_read_mac(mac, ESP_MAC_WIFI_STA) == ESP_OK) {
+        sprintf(a, "%-15s: %02X:%02X:%02X:%02X:%02X:%02X\r\n\r\n", 
+                      "Wi-Fi STA", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        s += String(a);
+    }
+
+
+    // 2. Wi-Fi SoftAP (熱點模式)
+    if (esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP) == ESP_OK) {
+        sprintf(a, "%-15s: %02X:%02X:%02X:%02X:%02X:%02X\r\n\r\n", 
+                      "Wi-Fi SoftAP", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        s += String(a);
+    }
+
+    // 3. Bluetooth (BLE 模式)
+    if (esp_read_mac(mac, ESP_MAC_BT) == ESP_OK) {
+        sprintf(a, "%-15s: %02X:%02X:%02X:%02X:%02X:%02X\r\n\r\n", 
+                      "Bluetooth/BLE", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        s += String(a);
+    }
+
+    // 4. Ethernet
+    if (esp_read_mac(mac, ESP_MAC_ETH) == ESP_OK) {
+        sprintf(a, "%-15s: %02X:%02X:%02X:%02X:%02X:%02X\r\n\r\n", 
+                      "Ethernet", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        s += String(a);
+    }
     return s;
 }
 
