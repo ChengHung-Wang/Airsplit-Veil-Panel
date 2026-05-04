@@ -15,8 +15,7 @@ private:
     void renderLightMode(const AppState &state);
     void renderWaterMode(const AppState &state);
     void renderWindMode(const AppState &state);
-    void setIcon(const lv_img_dsc_t *icon, lv_color_t color);
-    void setFanDots(uint8_t activeLevel);
+    void setIcon(const lv_img_dsc_t *icon, lv_color_t color, bool recolorEnabled = true);
     void setProgress(float progressRatio, bool visible);
     void setTemperatureArc(int temperature, bool visible);
     void setTemperatureScaleVisible(bool visible);
@@ -31,7 +30,6 @@ private:
     lv_obj_t *iconImage_ = nullptr;
     lv_obj_t *lightUnderline_ = nullptr;
     lv_obj_t *windProgressArc_ = nullptr;
-    lv_obj_t *fanDots_[3] = {nullptr, nullptr, nullptr};
     int currentTemperatureArcValue_ = 1;
     int currentWindArcValue_ = 1000;
 };

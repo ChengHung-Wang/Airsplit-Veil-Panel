@@ -8,7 +8,6 @@ constexpr lv_coord_t kTemperatureCenterY = -2;
 constexpr lv_coord_t kWindCenterY = -25;
 constexpr lv_coord_t kIconY = 130;
 constexpr lv_coord_t kLightUnderlineY = 166;
-constexpr lv_coord_t kDotY = -160;
 constexpr lv_coord_t kScaleY = 104;
 constexpr lv_coord_t kScaleX = 140;
 constexpr lv_coord_t kTemperatureArcSize = ESP_PANEL_LCD_HEIGHT;
@@ -25,6 +24,10 @@ lv_color_t warmLightColor()
 
 void setHidden(lv_obj_t *obj, bool hidden)
 {
+    if (obj == nullptr) {
+        return;
+    }
+
     if (hidden) {
         lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
     } else {
@@ -35,6 +38,20 @@ void setHidden(lv_obj_t *obj, bool hidden)
 void setArcValueExec(void *obj, int32_t value)
 {
     lv_arc_set_value(static_cast<lv_obj_t *>(obj), static_cast<int16_t>(value));
+}
+
+const lv_img_dsc_t *windIconForFanLevel(uint8_t fanLevel)
+{
+    switch (fanLevel) {
+    case 1:
+        return &wind_fanLevel_1_80x80;
+    case 2:
+        return &wind_fanLevel_2_80x80;
+    case 3:
+        return &wind_fanLevel_3_80x80;
+    default:
+        return &wind_80x80;
+    }
 }
 }
 
@@ -137,15 +154,6 @@ void PanelView::begin()
     // lv_obj_set_style_bg_opa(lightUnderline_, LV_OPA_COVER, 0);
     // lv_obj_set_style_radius(lightUnderline_, 0, 0);
 
-    for (uint8_t i = 0; i < 3; ++i) {
-        fanDots_[i] = lv_obj_create(screen_);
-        lv_obj_remove_style_all(fanDots_[i]);
-        lv_obj_set_size(fanDots_[i], 20, 20);
-        lv_obj_align(fanDots_[i], LV_ALIGN_CENTER, static_cast<lv_coord_t>((static_cast<int>(i) - 1) * 38), kDotY);
-        lv_obj_set_style_radius(fanDots_[i], LV_RADIUS_CIRCLE, 0);
-        lv_obj_set_style_bg_opa(fanDots_[i], LV_OPA_COVER, 0);
-    }
-
     lv_scr_load(screen_);
     initialized_ = true;
 }
@@ -189,9 +197,6 @@ void PanelView::setPowerOff(bool powerOff)
     setHidden(rightLabel_, powerOff);
     setHidden(iconImage_, powerOff);
     // setHidden(lightUnderline_, powerOff);
-    for (lv_obj_t *dot : fanDots_) {
-        setHidden(dot, powerOff);
-    }
 }
 
 void PanelView::renderTemperatureMode(
@@ -209,7 +214,6 @@ void PanelView::renderTemperatureMode(
     setTemperatureScaleVisible(true);
     setTemperatureArc(temperature, true);
     setProgress(0.0f, false);
-    setFanDots(0);
     setIcon(icon, iconColor);
 
     // The light mode underline design is removed in the current UI design, but we keep the code here for easy re-enable in the future if needed.
@@ -236,11 +240,7 @@ void PanelView::renderWindMode(const AppState &state)
 {
     setTemperatureScaleVisible(false);
     setTemperatureArc(state.temperature, false);
-    // The light mode underline design is removed in the current UI design, but we keep the code here for easy re-enable in the future if needed.
-    // --------
-    // setHidden(lightUnderline_, true);
-    setIcon(&wind_80x80, lv_color_white());
-    setFanDots(state.fanLevel);
+    setIcon(windIconForFanLevel(state.fanLevel), lv_color_white(), false);
 
     lv_obj_set_style_text_font(centerLabel_, &AppleSDGothicNeo_ExtraBold_128px, 0);
     const uint32_t displaySeconds = state.windAdjusting ? state.windAdjustCandidateSeconds : state.fanRemainingSeconds;
@@ -258,7 +258,7 @@ void PanelView::renderWindMode(const AppState &state)
     setProgress(progress, true);
 }
 
-void PanelView::setIcon(const lv_img_dsc_t *icon, lv_color_t color)
+void PanelView::setIcon(const lv_img_dsc_t *icon, lv_color_t color, bool recolorEnabled)
 {
     if (icon == nullptr) {
         setHidden(iconImage_, true);
@@ -267,26 +267,9 @@ void PanelView::setIcon(const lv_img_dsc_t *icon, lv_color_t color)
 
     lv_img_set_src(iconImage_, icon);
     lv_obj_set_style_img_recolor(iconImage_, color, 0);
+    lv_obj_set_style_img_recolor_opa(iconImage_, recolorEnabled ? LV_OPA_COVER : LV_OPA_TRANSP, 0);
     lv_obj_align(iconImage_, LV_ALIGN_CENTER, 0, kIconY);
     setHidden(iconImage_, false);
-}
-
-void PanelView::setFanDots(uint8_t activeLevel)
-{
-    for (uint8_t i = 0; i < 3; ++i) {
-        const bool visible = activeLevel > 0;
-        setHidden(fanDots_[i], !visible);
-        if (!visible) {
-            continue;
-        }
-
-        const bool active = (i + 1U) <= activeLevel;
-        lv_obj_set_style_bg_color(
-            fanDots_[i],
-            active ? lv_color_white() : lv_color_make(0x62, 0x62, 0x62),
-            0
-        );
-    }
 }
 
 void PanelView::setProgress(float progressRatio, bool visible)

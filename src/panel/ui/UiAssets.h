@@ -9,3 +9,6 @@ extern const lv_font_t AppleSDGothicNeo_ExtraBold_40px;
 extern const lv_img_dsc_t light_80x80;
 extern const lv_img_dsc_t water_80x80;
 extern const lv_img_dsc_t wind_80x80;
+extern const lv_img_dsc_t wind_fanLevel_1_80x80;
+extern const lv_img_dsc_t wind_fanLevel_2_80x80;
+extern const lv_img_dsc_t wind_fanLevel_3_80x80;
