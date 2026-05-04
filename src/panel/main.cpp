@@ -6,9 +6,8 @@
 #include "app/AppController.h"
 #include "input/InputRouter.h"
 #include "config/lvgl_port_v8.h"
-
-#include <WiFi.h>
-#include "esp_mac.h"
+#include "shared/mesh/EspNowNetwork.h"
+#include "shared/mesh/MeshRegistry.h"
 
 namespace {
     ESP_Panel *g_panel = nullptr;
@@ -17,10 +16,29 @@ namespace {
     InputRouter *g_inputRouter = nullptr;
     AppController *g_app = nullptr;
     HardwareSerial g_uart1(1);
+    mesh::MeshRegistry *g_registry = nullptr;
+    mesh::EspNowNetwork *g_network = nullptr;
 
     constexpr uint32_t kUartCommandBaudRate = 115200;
     constexpr int kUart1RxPin = 44;
     constexpr int kUart1TxPin = 43;
+
+    class PanelMeshListener : public mesh::EspNowNetwork::Listener {
+    public:
+        void onMeshMessageReceived(const uint8_t mac[6], const mesh::MeshMessage &message) override
+        {
+            if (g_app != nullptr) {
+                g_app->handleMeshMessage(mac, message, millis());
+            }
+        }
+
+        void onMeshSendComplete(const uint8_t mac[6], bool success) override
+        {
+            if (g_app != nullptr) {
+                g_app->handleMeshSendComplete(mac, success);
+            }
+        }
+    };
 
     void onKnobLeftEventCallback(int count, void *usr_data)
     {
@@ -54,7 +72,7 @@ namespace {
         (void)button_handle;
         (void)usr_data;
         if (g_inputRouter != nullptr) {
-            g_inputRouter->emitPowerToggle();
+            g_inputRouter->emitPowerOff();
         }
     }
 }
@@ -100,43 +118,23 @@ void setup()
     lvgl_port_init(g_panel->getLcd(), g_panel->getTouch());
 
     static InputRouter inputRouter;
-    static AppController app(g_panel);
+    static mesh::MeshRegistry registry;
+    static PanelMeshListener listener;
+    static mesh::EspNowNetwork network(registry, mesh::NodeRole::Panel, 1, listener);
+    static AppController app(g_panel, registry, network, mesh::NodeRole::Panel, 1);
     g_inputRouter = &inputRouter;
+    g_registry = &registry;
+    g_network = &network;
     g_app = &app;
+
+    Serial.println("Initialize ESP-NOW");
+    if (!g_network->begin()) {
+        Serial.println("ESP-NOW init failed");
+    }
 
     Serial.println("Create application");
     g_app->begin();
     Serial.println(title + " ready");
-
-    Serial.println("\n========================================");
-    Serial.println("       ESP32-C3 硬體 MAC 地址清單       ");
-    Serial.println("========================================");
-
-    uint8_t mac[6];
-    // 1. Wi-Fi Station (最常用於 ESP-NOW)
-    if (esp_read_mac(mac, ESP_MAC_WIFI_STA) == ESP_OK) {
-        Serial.printf("%-15s: %02X:%02X:%02X:%02X:%02X:%02X\r\n\r\n", 
-                      "Wi-Fi STA", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    }
-
-    // 2. Wi-Fi SoftAP (熱點模式)
-    if (esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP) == ESP_OK) {
-        Serial.printf("%-15s: %02X:%02X:%02X:%02X:%02X:%02X\r\n\r\n", 
-                      "Wi-Fi SoftAP", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    }
-
-    // 3. Bluetooth (BLE 模式)
-    if (esp_read_mac(mac, ESP_MAC_BT) == ESP_OK) {
-        Serial.printf("%-15s: %02X:%02X:%02X:%02X:%02X:%02X\r\n\r\n", 
-                      "Bluetooth/BLE", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    }
-
-    // 4. Ethernet (雖然 C3 無實體硬體，但底層仍有分配空間)
-    if (esp_read_mac(mac, ESP_MAC_ETH) == ESP_OK) {
-        Serial.printf("%-15s: %02X:%02X:%02X:%02X:%02X:%02X\r\n\r\n", 
-                      "Ethernet", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    }
-    Serial.println("========================================\r\n\r\n");   
 }
 
 void loop()
@@ -151,9 +149,17 @@ void loop()
 
     InputEvent event{};
     while (g_inputRouter->dequeue(event)) {
+        if (event.type == InputEventType::StatusRequest) {
+            g_app->printStatus(Serial, millis());
+            g_app->printStatus(g_uart1, millis());
+            continue;
+        }
         g_app->handleEvent(event, millis());
     }
 
+    if (g_network != nullptr) {
+        g_network->poll(millis());
+    }
     g_app->update(millis());
     g_app->renderIfNeeded();
 }
