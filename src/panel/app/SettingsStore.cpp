@@ -25,6 +25,11 @@ uint32_t SettingsStore::loadFanTimer(uint32_t fallbackValue) const
     return opened_ ? preferences_.getUInt(kFanTimerKey, fallbackValue) : fallbackValue;
 }
 
+uint8_t SettingsStore::loadFanLevel(uint8_t fallbackValue) const
+{
+    return opened_ ? preferences_.getUChar(kFanLevelKey, fallbackValue) : fallbackValue;
+}
+
 bool SettingsStore::loadLightEnabled(bool fallbackValue) const
 {
     return opened_ ? preferences_.getBool(kLightEnabledKey, fallbackValue) : fallbackValue;
@@ -41,6 +46,13 @@ void SettingsStore::saveFanTimer(uint32_t value)
 {
     if (opened_) {
         preferences_.putUInt(kFanTimerKey, value);
+    }
+}
+
+void SettingsStore::saveFanLevel(uint8_t value)
+{
+    if (opened_) {
+        preferences_.putUChar(kFanLevelKey, value);
     }
 }
 

@@ -35,7 +35,14 @@ private:
     void startWindAdjustment(uint32_t nowMs);
     void confirmWindAdjustment(uint32_t nowMs);
     void cancelWindAdjustment();
-    void markSettingsDirty(bool temperatureChanged, bool fanTimerChanged, bool lightChanged, uint32_t nowMs);
+    void cycleFanLevel(uint32_t nowMs); // fan level in wind mode
+    void markSettingsDirty(
+        bool temperatureChanged,
+        bool fanTimerChanged,
+        bool fanLevelChanged,
+        bool lightChanged,
+        uint32_t nowMs
+    );
     void commitPendingSettings();
     void applyDisplayPower(bool powerOn);
     void syncOutputs(uint32_t nowMs);
@@ -68,7 +75,9 @@ private:
     bool displayOffPending_ = false;
     bool temperatureSavePending_ = false;
     bool fanTimerSavePending_ = false;
+    bool fanLevelSavePending_ = false;
     bool lightSavePending_ = false;
+    uint8_t savedFanLevel_ = 1;
     uint32_t lastSettingsChangeAtMs_ = 0;
     uint32_t lastWindTickAtMs_ = 0;
     uint32_t lastWindAdjustInputAtMs_ = 0;

@@ -38,10 +38,11 @@ void AppController::begin()
         store_.loadFanTimer(state_.fanTimerSeconds),
         AppState::kMinFanTimerSeconds
     );
+    savedFanLevel_ = constrain(store_.loadFanLevel(state_.fanLevel), 1, 3);
     state_.lightEnabled = store_.loadLightEnabled(state_.lightEnabled);
     state_.fanRemainingSeconds = state_.fanTimerSeconds;
     state_.windAdjustCandidateSeconds = state_.fanTimerSeconds;
-    state_.fanLevel = 1;
+    state_.fanLevel = savedFanLevel_;
 
     applyDisplayPower(true);
     lvgl_port_lock(-1);
@@ -69,6 +70,7 @@ void AppController::handleEvent(const InputEvent &event, uint32_t nowMs)
     }
 
     if (!state_.powerOn) {
+        setPower(true, nowMs);
         return;
     }
 
@@ -102,6 +104,11 @@ void AppController::handleEvent(const InputEvent &event, uint32_t nowMs)
     case InputEventType::ModeWind:
         if (state_.currentMode != AppMode::Wind) {
             enterMode(AppMode::Wind, nowMs);
+        }else {
+            if (!state_.windAdjusting) {
+                cycleFanLevel(nowMs);
+                syncOutputs(nowMs);
+            }
         }
         break;
     case InputEventType::StatusRequest:
@@ -172,7 +179,7 @@ void AppController::handleMeshSendComplete(const uint8_t mac[6], bool success)
 
 void AppController::update(uint32_t nowMs)
 {
-    if (temperatureSavePending_ || fanTimerSavePending_ || lightSavePending_) {
+    if (temperatureSavePending_ || fanTimerSavePending_ || fanLevelSavePending_ || lightSavePending_) {
         if ((nowMs - lastSettingsChangeAtMs_) >= kSettingsCommitDelayMs) {
             commitPendingSettings();
         }
@@ -256,7 +263,7 @@ void AppController::handleKnobDelta(int delta, uint32_t nowMs)
     );
     if (nextTemperature != state_.temperature) {
         state_.temperature = nextTemperature;
-        markSettingsDirty(true, false, false, nowMs);
+        markSettingsDirty(true, false, false, false, nowMs);
         renderDirty_ = true;
     }
 }
@@ -271,6 +278,8 @@ void AppController::handleSelectPress(uint32_t nowMs)
         confirmWindAdjustment(nowMs);
         return;
     }
+
+    cycleFanLevel(nowMs);
 }
 
 void AppController::enterMode(AppMode mode, uint32_t nowMs)
@@ -284,13 +293,8 @@ void AppController::enterMode(AppMode mode, uint32_t nowMs)
         state_.fanRemainingSeconds = state_.fanTimerSeconds;
         state_.windAdjustCandidateSeconds = state_.fanTimerSeconds;
         lastWindTickAtMs_ = nowMs;
-        state_.fanLevel = 1;
-    } else if (mode == AppMode::Water) {
-        state_.fanLevel = 3;
-    } else {
-        state_.fanLevel = 0;
+        state_.fanLevel = savedFanLevel_;
     }
-
     syncOutputs(nowMs);
     renderDirty_ = true;
 }
@@ -328,7 +332,15 @@ void AppController::toggleLightState(uint32_t nowMs)
 {
     state_.lightEnabled = !state_.lightEnabled;
     sendLightCommand(state_.lightEnabled, nowMs);
-    markSettingsDirty(false, false, true, nowMs);
+    markSettingsDirty(false, false, false, true, nowMs);
+    renderDirty_ = true;
+}
+
+void AppController::cycleFanLevel(uint32_t nowMs)
+{
+    state_.fanLevel = (state_.fanLevel % 3U) + 1U;
+    savedFanLevel_ = state_.fanLevel;
+    markSettingsDirty(false, false, true, false, nowMs);
     renderDirty_ = true;
 }
 
@@ -351,7 +363,7 @@ void AppController::confirmWindAdjustment(uint32_t nowMs)
     state_.fanRemainingSeconds = state_.windAdjustCandidateSeconds;
     lastWindTickAtMs_ = nowMs;
     zeroReachedAtMs_ = 0;
-    markSettingsDirty(false, true, false, nowMs);
+    markSettingsDirty(false, true, false, false, nowMs);
     renderDirty_ = true;
 }
 
@@ -363,10 +375,17 @@ void AppController::cancelWindAdjustment()
     renderDirty_ = true;
 }
 
-void AppController::markSettingsDirty(bool temperatureChanged, bool fanTimerChanged, bool lightChanged, uint32_t nowMs)
+void AppController::markSettingsDirty(
+    bool temperatureChanged,
+    bool fanTimerChanged,
+    bool fanLevelChanged,
+    bool lightChanged,
+    uint32_t nowMs
+)
 {
     temperatureSavePending_ = temperatureSavePending_ || temperatureChanged;
     fanTimerSavePending_ = fanTimerSavePending_ || fanTimerChanged;
+    fanLevelSavePending_ = fanLevelSavePending_ || fanLevelChanged;
     lightSavePending_ = lightSavePending_ || lightChanged;
     lastSettingsChangeAtMs_ = nowMs;
 }
@@ -380,6 +399,10 @@ void AppController::commitPendingSettings()
     if (fanTimerSavePending_) {
         store_.saveFanTimer(state_.fanTimerSeconds);
         fanTimerSavePending_ = false;
+    }
+    if (fanLevelSavePending_) {
+        store_.saveFanLevel(savedFanLevel_);
+        fanLevelSavePending_ = false;
     }
     if (lightSavePending_) {
         store_.saveLightEnabled(state_.lightEnabled);
@@ -432,8 +455,17 @@ void AppController::syncOutputs(uint32_t nowMs)
         sendFansCommand(true, 100, 100, nowMs);
         break;
     case AppMode::Wind:
-        sendFansCommand(true, 35, 35, nowMs);
+        switch (state_.fanLevel) {
+        case 1:
+            sendFansCommand(true, 20, 20, nowMs);
         break;
+        case 2:
+            sendFansCommand(true, 40, 40, nowMs);
+            break;
+        case 3:
+            sendFansCommand(true, 66, 66, nowMs);
+            break;
+        }
     }
 }
 
