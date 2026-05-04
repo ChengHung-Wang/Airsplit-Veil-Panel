@@ -422,8 +422,11 @@ void AppController::syncOutputs(uint32_t nowMs)
 
     switch (state_.currentMode) {
     case AppMode::Idle:
-    case AppMode::Light:
         sendFansCommand(true, 15, 15, nowMs);
+        sendLightCommand(state_.lightEnabled, nowMs);
+        break;
+    case AppMode::Light:
+        sendLightCommand(state_.lightEnabled, nowMs);
         break;
     case AppMode::Water:
         sendFansCommand(true, 100, 100, nowMs);
