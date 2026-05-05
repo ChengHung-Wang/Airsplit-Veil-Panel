@@ -32,6 +32,7 @@ private:
     void enterMode(AppMode mode, uint32_t nowMs);
     void setPower(bool powerOn, uint32_t nowMs);
     void toggleLightState(uint32_t nowMs);
+    int windAdjustmentDeltaForInput(int knobDirection, uint32_t nowMs);
     void startWindAdjustment(uint32_t nowMs);
     void confirmWindAdjustment(uint32_t nowMs);
     void cancelWindAdjustment();
@@ -81,6 +82,7 @@ private:
     uint32_t lastSettingsChangeAtMs_ = 0;
     uint32_t lastWindTickAtMs_ = 0;
     uint32_t lastWindAdjustInputAtMs_ = 0;
+    uint32_t lastWindAdjustStepAtMs_ = 0;
     uint32_t lastBlinkToggleAtMs_ = 0;
     uint32_t zeroReachedAtMs_ = 0;
     uint32_t lastStatusBroadcastAtMs_ = 0;

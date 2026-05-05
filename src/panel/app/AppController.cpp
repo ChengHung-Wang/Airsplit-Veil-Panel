@@ -10,6 +10,11 @@ constexpr uint32_t kAutoPowerOffDelayMs = 5000;
 constexpr uint32_t kStatusRefreshMs = 3000;
 constexpr uint32_t kRemoteKeyDebounceMs = 150;
 constexpr uint32_t kMaxFanTimerSeconds = (99 * 60) + 59;
+constexpr int kWindAdjustBaseStepSeconds = 1;
+constexpr uint32_t kWindAdjustFastThresholdMs = 80;
+constexpr uint32_t kWindAdjustMediumThresholdMs = 160;
+constexpr int kWindAdjustFastStepSeconds = 10;
+constexpr int kWindAdjustMediumStepSeconds = 5;
 }
 
 AppController::AppController(
@@ -95,7 +100,7 @@ void AppController::handleEvent(const InputEvent &event, uint32_t nowMs)
         if (state_.currentMode == AppMode::Water) {
             state_.currentMode = AppMode::Idle;
             state_.fanLevel = 0;
-            sendFansCommand(true, 0, 0, nowMs);
+            sendFansCommand(true, 15, 15, nowMs);
             renderDirty_ = true;
         } else {
             enterMode(AppMode::Water, nowMs);
@@ -244,7 +249,8 @@ void AppController::handleKnobDelta(int delta, uint32_t nowMs)
 {
     if (state_.currentMode == AppMode::Wind) {
         startWindAdjustment(nowMs);
-        const int nextCandidate = static_cast<int>(state_.windAdjustCandidateSeconds) + delta;
+        const int nextCandidate = static_cast<int>(state_.windAdjustCandidateSeconds)
+            + windAdjustmentDeltaForInput(delta, nowMs);
         state_.windAdjustCandidateSeconds = constrain(
             nextCandidate,
             static_cast<int>(AppState::kMinFanTimerSeconds),
@@ -268,6 +274,22 @@ void AppController::handleKnobDelta(int delta, uint32_t nowMs)
     }
 }
 
+int AppController::windAdjustmentDeltaForInput(int knobDirection, uint32_t nowMs)
+{
+    int stepSeconds = kWindAdjustBaseStepSeconds;
+    if (lastWindAdjustStepAtMs_ != 0U) {
+        const uint32_t elapsedMs = nowMs - lastWindAdjustStepAtMs_;
+        if (elapsedMs <= kWindAdjustFastThresholdMs) {
+            stepSeconds = kWindAdjustFastStepSeconds;
+        } else if (elapsedMs <= kWindAdjustMediumThresholdMs) {
+            stepSeconds = kWindAdjustMediumStepSeconds;
+        }
+    }
+
+    lastWindAdjustStepAtMs_ = nowMs;
+    return (knobDirection < 0) ? -stepSeconds : stepSeconds;
+}
+
 void AppController::handleSelectPress(uint32_t nowMs)
 {
     if (state_.currentMode != AppMode::Wind) {
@@ -287,6 +309,7 @@ void AppController::enterMode(AppMode mode, uint32_t nowMs)
     state_.currentMode = mode;
     state_.windAdjusting = false;
     state_.windAdjustmentBlinkOn = true;
+    lastWindAdjustStepAtMs_ = 0;
     zeroReachedAtMs_ = 0;
 
     if (mode == AppMode::Wind) {
@@ -309,6 +332,7 @@ void AppController::setPower(bool powerOn, uint32_t nowMs)
     state_.powerOn = powerOn;
     state_.windAdjusting = false;
     state_.windAdjustmentBlinkOn = true;
+    lastWindAdjustStepAtMs_ = 0;
     zeroReachedAtMs_ = 0;
 
     if (powerOn) {
@@ -351,6 +375,7 @@ void AppController::startWindAdjustment(uint32_t nowMs)
         state_.windAdjustCandidateSeconds = max(state_.fanRemainingSeconds, AppState::kMinFanTimerSeconds);
         state_.windAdjustmentBlinkOn = true;
         lastBlinkToggleAtMs_ = nowMs;
+        lastWindAdjustStepAtMs_ = 0;
     }
     lastWindAdjustInputAtMs_ = nowMs;
 }
@@ -359,6 +384,7 @@ void AppController::confirmWindAdjustment(uint32_t nowMs)
 {
     state_.windAdjusting = false;
     state_.windAdjustmentBlinkOn = true;
+    lastWindAdjustStepAtMs_ = 0;
     state_.fanTimerSeconds = state_.windAdjustCandidateSeconds;
     state_.fanRemainingSeconds = state_.windAdjustCandidateSeconds;
     lastWindTickAtMs_ = nowMs;
@@ -371,6 +397,7 @@ void AppController::cancelWindAdjustment()
 {
     state_.windAdjusting = false;
     state_.windAdjustmentBlinkOn = true;
+    lastWindAdjustStepAtMs_ = 0;
     state_.windAdjustCandidateSeconds = max(state_.fanRemainingSeconds, AppState::kMinFanTimerSeconds);
     renderDirty_ = true;
 }
