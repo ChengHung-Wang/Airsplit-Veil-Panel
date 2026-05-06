@@ -472,7 +472,7 @@ void AppController::syncOutputs(uint32_t nowMs)
 
     switch (state_.currentMode) {
     case AppMode::Idle:
-        sendFansCommand(true, 15, 15, nowMs);
+        sendFansCommand(true, 30, 30, nowMs);
         sendLightCommand(state_.lightEnabled, nowMs);
         break;
     case AppMode::Light:
@@ -484,13 +484,13 @@ void AppController::syncOutputs(uint32_t nowMs)
     case AppMode::Wind:
         switch (state_.fanLevel) {
         case 1:
-            sendFansCommand(true, 20, 20, nowMs);
+            sendFansCommand(true, 50, 50, nowMs);
         break;
         case 2:
-            sendFansCommand(true, 40, 40, nowMs);
+            sendFansCommand(true, 60, 60, nowMs);
             break;
         case 3:
-            sendFansCommand(true, 66, 66, nowMs);
+            sendFansCommand(true, 80, 80, nowMs);
             break;
         }
     }
