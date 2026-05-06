@@ -1,15 +1,13 @@
 #include "input/UartCommandParser.h"
 
-String UartCommandParser::normalize(const char *command)
-{
+String UartCommandParser::normalize(const char *command) {
     String normalized = command == nullptr ? "" : String(command);
     normalized.trim();
     normalized.toUpperCase();
     return normalized;
 }
 
-bool UartCommandParser::parse(const char *command, InputEvent &event) const
-{
+bool UartCommandParser::parse(const char *command, InputEvent &event) const {
     const String normalized = normalize(command);
     if (normalized.isEmpty()) {
         return false;

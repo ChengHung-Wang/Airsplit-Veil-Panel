@@ -25,60 +25,53 @@ namespace {
 
     class PanelMeshListener : public mesh::EspNowNetwork::Listener {
     public:
-        void onMeshMessageReceived(const uint8_t mac[6], const mesh::MeshMessage &message) override
-        {
+        void onMeshMessageReceived(const uint8_t mac[6], const mesh::MeshMessage &message) override {
             if (g_app != nullptr) {
                 g_app->handleMeshMessage(mac, message, millis());
             }
         }
 
-        void onMeshSendComplete(const uint8_t mac[6], bool success) override
-        {
+        void onMeshSendComplete(const uint8_t mac[6], bool success) override {
             if (g_app != nullptr) {
                 g_app->handleMeshSendComplete(mac, success);
             }
         }
     };
 
-    void onKnobLeftEventCallback(int count, void *usr_data)
-    {
-        (void)count;
-        (void)usr_data;
+    void onKnobLeftEventCallback(int count, void *usr_data) {
+        (void) count;
+        (void) usr_data;
         if (g_inputRouter != nullptr) {
             g_inputRouter->emitKnobRight();
         }
     }
 
-    void onKnobRightEventCallback(int count, void *usr_data)
-    {
-        (void)count;
-        (void)usr_data;
+    void onKnobRightEventCallback(int count, void *usr_data) {
+        (void) count;
+        (void) usr_data;
         if (g_inputRouter != nullptr) {
             g_inputRouter->emitKnobLeft();
         }
     }
 
-    void onButtonSingleClick(void *button_handle, void *usr_data)
-    {
-        (void)button_handle;
-        (void)usr_data;
+    void onButtonSingleClick(void *button_handle, void *usr_data) {
+        (void) button_handle;
+        (void) usr_data;
         if (g_inputRouter != nullptr) {
             g_inputRouter->emitSelectPress();
         }
     }
 
-    void onButtonLongPressStart(void *button_handle, void *usr_data)
-    {
-        (void)button_handle;
-        (void)usr_data;
+    void onButtonLongPressStart(void *button_handle, void *usr_data) {
+        (void) button_handle;
+        (void) usr_data;
         if (g_inputRouter != nullptr) {
             g_inputRouter->emitPowerOff();
         }
     }
 }
 
-void setup()
-{
+void setup() {
 #ifdef BOARD_UEDX46460015_MD50E
     pinMode(17, OUTPUT);
     digitalWrite(17, HIGH);
@@ -137,8 +130,7 @@ void setup()
     Serial.println(title + " ready");
 }
 
-void loop()
-{
+void loop() {
     if ((g_inputRouter == nullptr) || (g_app == nullptr)) {
         delay(10);
         return;

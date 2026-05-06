@@ -38,6 +38,8 @@
  *
  */
 #define LVGL_PORT_BUFFER_MALLOC_CAPS            (MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT)       // Allocate LVGL buffer in SRAM
+
+
 // #define LVGL_PORT_BUFFER_MALLOC_CAPS            (MALLOC_CAP_SPIRAM)      // Allocate LVGL buffer in PSRAM
 #define LVGL_PORT_BUFFER_SIZE                   (LVGL_PORT_DISP_WIDTH * 20)
 #define LVGL_PORT_BUFFER_NUM                    (2)
@@ -51,10 +53,10 @@
 #define LVGL_PORT_TASK_STACK_SIZE               (6 * 1024)  // The stack size of the LVGL timer task, in bytes
 #define LVGL_PORT_TASK_PRIORITY                 (2)         // The priority of the LVGL timer task
 #define LVGL_PORT_TASK_CORE                     (ARDUINO_RUNNING_CORE)
-                                                            // The core of the LVGL timer task, `-1` means the don't specify the core
-                                                            // Default is the same as the Arduino task
-                                                            // This can be set to `1` only if the SoCs support dual-core,
-                                                            // otherwise it should be set to `-1` or `0`
+// The core of the LVGL timer task, `-1` means the don't specify the core
+// Default is the same as the Arduino task
+// This can be set to `1` only if the SoCs support dual-core,
+// otherwise it should be set to `-1` or `0`
 
 /**
  * Avoid tering related configurations, can be adjusted by users.
@@ -106,26 +108,26 @@
 #define LVGL_PORT_AVOID_TEAR                    (1)
 // Set the buffer number and refresh mode according to the different modes
 #if LVGL_PORT_AVOID_TEARING_MODE == 1
-    #define LVGL_PORT_DISP_BUFFER_NUM           (2)
-    #define LVGL_PORT_FULL_REFRESH              (1)
+#define LVGL_PORT_DISP_BUFFER_NUM           (2)
+#define LVGL_PORT_FULL_REFRESH              (1)
 #elif LVGL_PORT_AVOID_TEARING_MODE == 2
-    #define LVGL_PORT_DISP_BUFFER_NUM           (3)
-    #define LVGL_PORT_FULL_REFRESH              (1)
+#define LVGL_PORT_DISP_BUFFER_NUM           (3)
+#define LVGL_PORT_FULL_REFRESH              (1)
 #elif LVGL_PORT_AVOID_TEARING_MODE == 3
-    #define LVGL_PORT_DISP_BUFFER_NUM           (2)
-    #define LVGL_PORT_DIRECT_MODE               (1)
+#define LVGL_PORT_DISP_BUFFER_NUM           (2)
+#define LVGL_PORT_DIRECT_MODE               (1)
 #else
-    #error "Invalid avoid tearing mode, please set macro `LVGL_PORT_AVOID_TEARING_MODE` to one of `LVGL_PORT_AVOID_TEARING_MODE_*`"
+#error "Invalid avoid tearing mode, please set macro `LVGL_PORT_AVOID_TEARING_MODE` to one of `LVGL_PORT_AVOID_TEARING_MODE_*`"
 #endif
 // Check rotation
 #if (LVGL_PORT_ROTATION_DEGREE != 0) && (LVGL_PORT_ROTATION_DEGREE != 90) && (LVGL_PORT_ROTATION_DEGREE != 180) && \
     (LVGL_PORT_ROTATION_DEGREE != 270)
-    #error "Invalid rotation degree, please set to 0, 90, 180 or 270"
+#error "Invalid rotation degree, please set to 0, 90, 180 or 270"
 #elif LVGL_PORT_ROTATION_DEGREE != 0
-    #ifdef LVGL_PORT_DISP_BUFFER_NUM
-        #undef LVGL_PORT_DISP_BUFFER_NUM
-        #define LVGL_PORT_DISP_BUFFER_NUM           (3)
-    #endif
+#ifdef LVGL_PORT_DISP_BUFFER_NUM
+#undef LVGL_PORT_DISP_BUFFER_NUM
+#define LVGL_PORT_DISP_BUFFER_NUM           (3)
+#endif
 #endif
 #endif /* LVGL_PORT_AVOID_TEARING_MODE */
 
@@ -143,7 +145,7 @@ extern "C" {
  *
  * @return true if success, otherwise false
  */
-bool lvgl_port_init(ESP_PanelLcd *lcd, ESP_PanelTouch *tp);
+bool lvgl_port_init(ESP_PanelLcd * lcd, ESP_PanelTouch * tp);
 
 /**
  * @brief Lock the LVGL mutex. This function should be called before calling any LVGL APIs when not in LVGL task,

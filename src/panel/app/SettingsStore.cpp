@@ -1,63 +1,53 @@
 #include "app/SettingsStore.h"
 
-void SettingsStore::begin()
-{
+void SettingsStore::begin() {
     if (!opened_) {
         opened_ = preferences_.begin(kNamespace, false);
     }
 }
 
-void SettingsStore::end()
-{
+void SettingsStore::end() {
     if (opened_) {
         preferences_.end();
         opened_ = false;
     }
 }
 
-int SettingsStore::loadTemperature(int fallbackValue) const
-{
+int SettingsStore::loadTemperature(int fallbackValue) const {
     return opened_ ? preferences_.getInt(kTemperatureKey, fallbackValue) : fallbackValue;
 }
 
-uint32_t SettingsStore::loadFanTimer(uint32_t fallbackValue) const
-{
+uint32_t SettingsStore::loadFanTimer(uint32_t fallbackValue) const {
     return opened_ ? preferences_.getUInt(kFanTimerKey, fallbackValue) : fallbackValue;
 }
 
-uint8_t SettingsStore::loadFanLevel(uint8_t fallbackValue) const
-{
+uint8_t SettingsStore::loadFanLevel(uint8_t fallbackValue) const {
     return opened_ ? preferences_.getUChar(kFanLevelKey, fallbackValue) : fallbackValue;
 }
 
-bool SettingsStore::loadLightEnabled(bool fallbackValue) const
-{
+bool SettingsStore::loadLightEnabled(bool fallbackValue) const {
     return opened_ ? preferences_.getBool(kLightEnabledKey, fallbackValue) : fallbackValue;
 }
 
-void SettingsStore::saveTemperature(int value)
-{
+void SettingsStore::saveTemperature(int value) {
     if (opened_) {
         preferences_.putInt(kTemperatureKey, value);
     }
 }
 
-void SettingsStore::saveFanTimer(uint32_t value)
-{
+void SettingsStore::saveFanTimer(uint32_t value) {
     if (opened_) {
         preferences_.putUInt(kFanTimerKey, value);
     }
 }
 
-void SettingsStore::saveFanLevel(uint8_t value)
-{
+void SettingsStore::saveFanLevel(uint8_t value) {
     if (opened_) {
         preferences_.putUChar(kFanLevelKey, value);
     }
 }
 
-void SettingsStore::saveLightEnabled(bool value)
-{
+void SettingsStore::saveLightEnabled(bool value) {
     if (opened_) {
         preferences_.putBool(kLightEnabledKey, value);
     }

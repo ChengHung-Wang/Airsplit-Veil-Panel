@@ -9,19 +9,28 @@ public:
     LightNodeApp(mesh::MeshRegistry &registry, gpio_num_t relayPin);
 
     void begin();
+
     void loop(uint32_t nowMs);
 
     void onMeshMessageReceived(const uint8_t mac[6], const mesh::MeshMessage &message) override;
+
     void onMeshSendComplete(const uint8_t mac[6], bool success) override;
 
 private:
     void initRelayPin();
+
     void setEnabled(bool enabled);
+
     void sendStatus(uint32_t requestId);
+
     void announceIdentity();
+
     void notePanelLinked(const mesh::MeshMessage &message);
+
     bool sendToPanel(const mesh::MeshMessage &message);
+
     void logMesh(const char *direction, const mesh::MeshMessage &message);
+
     uint32_t nextRequestId();
 
     mesh::MeshRegistry &registry_;

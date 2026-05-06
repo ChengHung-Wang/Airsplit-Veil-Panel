@@ -19,23 +19,38 @@ public:
     );
 
     void begin();
+
     void handleEvent(const InputEvent &event, uint32_t nowMs);
+
     void handleMeshMessage(const uint8_t mac[6], const mesh::MeshMessage &message, uint32_t nowMs);
+
     void handleMeshSendComplete(const uint8_t mac[6], bool success);
+
     void update(uint32_t nowMs);
+
     void renderIfNeeded();
+
     void printStatus(Print &out, uint32_t nowMs);
 
 private:
     void handleKnobDelta(int delta, uint32_t nowMs);
+
     void handleSelectPress(uint32_t nowMs);
+
     void enterMode(AppMode mode, uint32_t nowMs);
+
     void setPower(bool powerOn, uint32_t nowMs);
+
     void toggleLightState(uint32_t nowMs);
+
     int windAdjustmentDeltaForInput(int knobDirection, uint32_t nowMs);
+
     void startWindAdjustment(uint32_t nowMs);
+
     void confirmWindAdjustment(uint32_t nowMs);
+
     void cancelWindAdjustment();
+
     void cycleFanLevel(uint32_t nowMs); // fan level in wind mode
     void markSettingsDirty(
         bool temperatureChanged,
@@ -44,17 +59,29 @@ private:
         bool lightChanged,
         uint32_t nowMs
     );
+
     void commitPendingSettings();
+
     void applyDisplayPower(bool powerOn);
+
     void syncOutputs(uint32_t nowMs);
+
     void sendFansCommand(bool enable, uint8_t fan1Percent, uint8_t fan2Percent, uint32_t nowMs);
+
     void sendLightCommand(bool enabled, uint32_t nowMs);
+
     void requestPeripheralStatus(uint32_t nowMs);
+
     void announceIdentity();
+
     void logMesh(const char *direction, const mesh::MeshMessage &message);
+
     bool shouldAcceptRemoteKey(uint32_t nowMs);
+
     void storePeripheralMessage(const uint8_t mac[6], const mesh::MeshMessage &message, uint32_t nowMs);
+
     String summarizePeripheral(const mesh::RegistryEntry &entry) const;
+
     uint32_t nextRequestId();
 
     ESP_Panel *panel_ = nullptr;

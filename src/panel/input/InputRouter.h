@@ -8,12 +8,17 @@
 class InputRouter {
 public:
     void emitKnobLeft();
+
     void emitKnobRight();
+
     void emitSelectPress();
+
     void emitPowerToggle();
+
     void emitPowerOff();
 
     void pollSerial(Stream &serial, Print &reply, InputEventSource source);
+
     bool dequeue(InputEvent &event);
 
 private:
@@ -28,8 +33,11 @@ private:
     };
 
     bool enqueue(const InputEvent &event);
+
     bool enqueue(InputEventType type);
+
     SerialState *getSerialState(InputEventSource source);
+
     void parseLine(SerialState &state, Print &reply, InputEventSource source);
 
     InputEvent queue_[kQueueSize] = {};

@@ -8,7 +8,9 @@ public:
     static constexpr int kArcMaxValue = 1000;
 
     static lv_color_t colorForTemperature(int temperature);
+
     static int arcValueForTemperature(int temperature);
+
     static int visibleArcValueForTemperature(int temperature);
 
 private:

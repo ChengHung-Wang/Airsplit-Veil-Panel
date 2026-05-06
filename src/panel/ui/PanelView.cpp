@@ -4,59 +4,54 @@
 #include "utils/TemperatureColorMapper.h"
 
 namespace {
-constexpr lv_coord_t kTemperatureCenterY = -2;
-constexpr lv_coord_t kWindCenterY = -25;
-constexpr lv_coord_t kIconY = 130;
-constexpr lv_coord_t kLightUnderlineY = 166;
-constexpr lv_coord_t kScaleY = 104;
-constexpr lv_coord_t kScaleX = 140;
-constexpr lv_coord_t kTemperatureArcSize = ESP_PANEL_LCD_HEIGHT;
-constexpr lv_coord_t kWindArcSize = ESP_PANEL_LCD_HEIGHT;
-constexpr int kTemperatureArcRotation = 150;
-constexpr int kTemperatureArcSweep = 240;
-constexpr int kWindArcRange = 1000;
-constexpr uint32_t kArcAnimDurationMs = 150;
+    constexpr lv_coord_t kTemperatureCenterY = -2;
+    constexpr lv_coord_t kWindCenterY = -25;
+    constexpr lv_coord_t kIconY = 130;
+    constexpr lv_coord_t kLightUnderlineY = 166;
+    constexpr lv_coord_t kScaleY = 104;
+    constexpr lv_coord_t kScaleX = 140;
+    constexpr lv_coord_t kTemperatureArcSize = ESP_PANEL_LCD_HEIGHT;
+    constexpr lv_coord_t kWindArcSize = ESP_PANEL_LCD_HEIGHT;
+    constexpr int kTemperatureArcRotation = 150;
+    constexpr int kTemperatureArcSweep = 240;
+    constexpr int kWindArcRange = 1000;
+    constexpr uint32_t kArcAnimDurationMs = 150;
 
-lv_color_t warmLightColor()
-{
-    return lv_color_make(0xF1, 0xD3, 0x9D);
-}
-
-void setHidden(lv_obj_t *obj, bool hidden)
-{
-    if (obj == nullptr) {
-        return;
+    lv_color_t warmLightColor() {
+        return lv_color_make(0xF1, 0xD3, 0x9D);
     }
 
-    if (hidden) {
-        lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_obj_clear_flag(obj, LV_OBJ_FLAG_HIDDEN);
+    void setHidden(lv_obj_t *obj, bool hidden) {
+        if (obj == nullptr) {
+            return;
+        }
+
+        if (hidden) {
+            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_clear_flag(obj, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+
+    void setArcValueExec(void *obj, int32_t value) {
+        lv_arc_set_value(static_cast<lv_obj_t *>(obj), static_cast<int16_t>(value));
+    }
+
+    const lv_img_dsc_t *windIconForFanLevel(uint8_t fanLevel) {
+        switch (fanLevel) {
+            case 1:
+                return &wind_fanLevel_1_80x80;
+            case 2:
+                return &wind_fanLevel_2_80x80;
+            case 3:
+                return &wind_fanLevel_3_80x80;
+            default:
+                return &wind_80x80;
+        }
     }
 }
 
-void setArcValueExec(void *obj, int32_t value)
-{
-    lv_arc_set_value(static_cast<lv_obj_t *>(obj), static_cast<int16_t>(value));
-}
-
-const lv_img_dsc_t *windIconForFanLevel(uint8_t fanLevel)
-{
-    switch (fanLevel) {
-    case 1:
-        return &wind_fanLevel_1_80x80;
-    case 2:
-        return &wind_fanLevel_2_80x80;
-    case 3:
-        return &wind_fanLevel_3_80x80;
-    default:
-        return &wind_80x80;
-    }
-}
-}
-
-void PanelView::begin()
-{
+void PanelView::begin() {
     if (initialized_) {
         return;
     }
@@ -143,7 +138,7 @@ void PanelView::begin()
     lv_obj_align(iconImage_, LV_ALIGN_CENTER, 0, kIconY);
     lv_obj_set_style_img_recolor_opa(iconImage_, LV_OPA_COVER, 0);
     lv_obj_set_style_transition(iconImage_, &transition, 0);
-    
+
     // The light mode underline design is removed in the current UI design, but we keep the code here for easy re-enable in the future if needed.
     // --------
     // lightUnderline_ = lv_obj_create(screen_);
@@ -158,8 +153,7 @@ void PanelView::begin()
     initialized_ = true;
 }
 
-void PanelView::render(const AppState &state)
-{
+void PanelView::render(const AppState &state) {
     if (!initialized_) {
         begin();
     }
@@ -170,26 +164,25 @@ void PanelView::render(const AppState &state)
     }
 
     switch (state.currentMode) {
-    case AppMode::Idle:
-        renderTemperatureMode(state.temperature, nullptr, lv_color_white(), false);
-        setHidden(leftLabel_, true);
-        setHidden(rightLabel_, true);
-        // setHidden(temperatureArc_, true);
-        break;
-    case AppMode::Light:
-        renderLightMode(state);
-        break;
-    case AppMode::Water:
-        renderWaterMode(state);
-        break;
-    case AppMode::Wind:
-        renderWindMode(state);
-        break;
+        case AppMode::Idle:
+            renderTemperatureMode(state.temperature, nullptr, lv_color_white(), false);
+            setHidden(leftLabel_, true);
+            setHidden(rightLabel_, true);
+            // setHidden(temperatureArc_, true);
+            break;
+        case AppMode::Light:
+            renderLightMode(state);
+            break;
+        case AppMode::Water:
+            renderWaterMode(state);
+            break;
+        case AppMode::Wind:
+            renderWindMode(state);
+            break;
     }
 }
 
-void PanelView::setPowerOff(bool powerOff)
-{
+void PanelView::setPowerOff(bool powerOff) {
     setHidden(temperatureArc_, powerOff);
     setHidden(windProgressArc_, powerOff);
     setHidden(centerLabel_, powerOff);
@@ -204,8 +197,7 @@ void PanelView::renderTemperatureMode(
     const lv_img_dsc_t *icon,
     lv_color_t iconColor,
     bool showLightUnderline
-)
-{
+) {
     lv_obj_set_style_text_font(centerLabel_, &AppleSDGothicNeo_ExtraBold_200px, 0);
     lv_label_set_text_fmt(centerLabel_, "%d", temperature);
     lv_obj_align(centerLabel_, LV_ALIGN_CENTER, 0, kTemperatureCenterY);
@@ -221,8 +213,7 @@ void PanelView::renderTemperatureMode(
     // setHidden(lightUnderline_, !showLightUnderline);
 }
 
-void PanelView::renderLightMode(const AppState &state)
-{
+void PanelView::renderLightMode(const AppState &state) {
     renderTemperatureMode(
         state.temperature,
         &light_80x80,
@@ -231,13 +222,11 @@ void PanelView::renderLightMode(const AppState &state)
     );
 }
 
-void PanelView::renderWaterMode(const AppState &state)
-{
+void PanelView::renderWaterMode(const AppState &state) {
     renderTemperatureMode(state.temperature, &water_80x80, lv_color_white(), false);
 }
 
-void PanelView::renderWindMode(const AppState &state)
-{
+void PanelView::renderWindMode(const AppState &state) {
     setTemperatureScaleVisible(false);
     setTemperatureArc(state.temperature, false);
     setIcon(windIconForFanLevel(state.fanLevel), lv_color_white(), false);
@@ -253,13 +242,13 @@ void PanelView::renderWindMode(const AppState &state)
     lv_obj_set_style_text_color(centerLabel_, lv_color_white(), 0);
 
     const float progress = (state.fanTimerSeconds == 0U)
-        ? 0.0f
-        : static_cast<float>(state.fanRemainingSeconds) / static_cast<float>(state.fanTimerSeconds);
+                               ? 0.0f
+                               : static_cast<float>(state.fanRemainingSeconds) / static_cast<float>(state.
+                                     fanTimerSeconds);
     setProgress(progress, true);
 }
 
-void PanelView::setIcon(const lv_img_dsc_t *icon, lv_color_t color, bool recolorEnabled)
-{
+void PanelView::setIcon(const lv_img_dsc_t *icon, lv_color_t color, bool recolorEnabled) {
     if (icon == nullptr) {
         setHidden(iconImage_, true);
         return;
@@ -272,8 +261,7 @@ void PanelView::setIcon(const lv_img_dsc_t *icon, lv_color_t color, bool recolor
     setHidden(iconImage_, false);
 }
 
-void PanelView::setProgress(float progressRatio, bool visible)
-{
+void PanelView::setProgress(float progressRatio, bool visible) {
     setHidden(windProgressArc_, !visible);
     if (!visible) {
         return;
@@ -287,8 +275,7 @@ void PanelView::setProgress(float progressRatio, bool visible)
     animateArcTo(windProgressArc_, currentWindArcValue_, value, kArcAnimDurationMs);
 }
 
-void PanelView::setTemperatureArc(int temperature, bool visible)
-{
+void PanelView::setTemperatureArc(int temperature, bool visible) {
     setHidden(temperatureArc_, !visible);
     if (!visible) {
         return;
@@ -307,18 +294,16 @@ void PanelView::setTemperatureArc(int temperature, bool visible)
     );
 }
 
-void PanelView::setTemperatureScaleVisible(bool visible)
-{
+void PanelView::setTemperatureScaleVisible(bool visible) {
     // setHidden(leftLabel_, !visible);
     // setHidden(rightLabel_, !visible);
-    
+
     // For the current design we decided to hide the temperature scales labels.
     setHidden(leftLabel_, true);
     setHidden(rightLabel_, true);
 }
 
-void PanelView::animateArcTo(lv_obj_t *arc, int &currentValue, int targetValue, uint32_t durationMs)
-{
+void PanelView::animateArcTo(lv_obj_t *arc, int &currentValue, int targetValue, uint32_t durationMs) {
     lv_anim_del(arc, setArcValueExec);
 
     lv_anim_t animation;

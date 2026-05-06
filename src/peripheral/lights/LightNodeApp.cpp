@@ -3,21 +3,17 @@
 #include <driver/gpio.h>
 
 namespace {
-
-constexpr uint8_t kNodeId = 1;
-constexpr uint32_t kRelayPinMaskBase = 1U;
-
-}  // namespace
+    constexpr uint8_t kNodeId = 1;
+    constexpr uint32_t kRelayPinMaskBase = 1U;
+} // namespace
 
 LightNodeApp::LightNodeApp(mesh::MeshRegistry &registry, gpio_num_t relayPin)
     : registry_(registry),
       network_(registry_, mesh::NodeRole::Lights, kNodeId, *this),
-      relayPin_(relayPin)
-{
+      relayPin_(relayPin) {
 }
 
-void LightNodeApp::begin()
-{
+void LightNodeApp::begin() {
     Serial.begin(115200);
     delay(200);
 
@@ -27,13 +23,11 @@ void LightNodeApp::begin()
     sendStatus(0);
 }
 
-void LightNodeApp::loop(uint32_t nowMs)
-{
+void LightNodeApp::loop(uint32_t nowMs) {
     network_.poll(nowMs);
 }
 
-void LightNodeApp::onMeshMessageReceived(const uint8_t mac[6], const mesh::MeshMessage &message)
-{
+void LightNodeApp::onMeshMessageReceived(const uint8_t mac[6], const mesh::MeshMessage &message) {
     if (!mesh::targetsNode(message, mesh::NodeRole::Lights, kNodeId)) {
         return;
     }
@@ -52,16 +46,14 @@ void LightNodeApp::onMeshMessageReceived(const uint8_t mac[6], const mesh::MeshM
     }
 }
 
-void LightNodeApp::onMeshSendComplete(const uint8_t mac[6], bool success)
-{
+void LightNodeApp::onMeshSendComplete(const uint8_t mac[6], bool success) {
     if (!success) {
         Serial.print("ESP-NOW send failed: ");
         Serial.println(mesh::macToString(mac));
     }
 }
 
-void LightNodeApp::initRelayPin()
-{
+void LightNodeApp::initRelayPin() {
     gpio_reset_pin(relayPin_);
 
     gpio_config_t config{};
@@ -77,20 +69,17 @@ void LightNodeApp::initRelayPin()
     Serial.printf("[LIGHT GPIO] init pin=%d level=%d\r\n", relayPin_, gpio_get_level(relayPin_));
 }
 
-void LightNodeApp::setEnabled(bool enabled)
-{
+void LightNodeApp::setEnabled(bool enabled) {
     enabled_ = enabled;
     gpio_set_level(relayPin_, enabled_ ? 1 : 0);
     Serial.printf(
         "[LIGHT GPIO] set pin=%d target=%d level=%d\r\n",
         relayPin_,
         enabled_ ? 1 : 0,
-        gpio_get_level(relayPin_)
-    );
+        gpio_get_level(relayPin_));
 }
 
-void LightNodeApp::sendStatus(uint32_t requestId)
-{
+void LightNodeApp::sendStatus(uint32_t requestId) {
     const mesh::MeshMessage message = mesh::makeLightStatusMessage(
         mesh::NodeRole::Lights,
         kNodeId,
@@ -102,8 +91,7 @@ void LightNodeApp::sendStatus(uint32_t requestId)
     sendToPanel(message);
 }
 
-void LightNodeApp::announceIdentity()
-{
+void LightNodeApp::announceIdentity() {
     if (panelLinked_) {
         return;
     }
@@ -112,28 +100,28 @@ void LightNodeApp::announceIdentity()
     network_.sendToRole(mesh::NodeRole::Panel, hello);
 }
 
-void LightNodeApp::notePanelLinked(const mesh::MeshMessage &message)
-{
+void LightNodeApp::notePanelLinked(const mesh::MeshMessage &message) {
     if (static_cast<mesh::NodeRole>(message.sourceRole) == mesh::NodeRole::Panel) {
         panelLinked_ = true;
     }
 }
 
-bool LightNodeApp::sendToPanel(const mesh::MeshMessage &message)
-{
-    if (panelLinked_ && network_.sendToNode(mesh::NodeRole::Panel, 1, message)) {
+bool LightNodeApp::sendToPanel(const mesh::MeshMessage &message) {
+    if (panelLinked_ &&network_
+    .
+    sendToNode(mesh::NodeRole::Panel, 1, message)
+    )
+    {
         return true;
     }
     return network_.sendToRole(mesh::NodeRole::Panel, message);
 }
 
-uint32_t LightNodeApp::nextRequestId()
-{
+uint32_t LightNodeApp::nextRequestId() {
     return nextRequestId_++;
 }
 
-void LightNodeApp::logMesh(const char *direction, const mesh::MeshMessage &message)
-{
+void LightNodeApp::logMesh(const char *direction, const mesh::MeshMessage &message) {
     Serial.print("[MESH ");
     Serial.print(direction);
     Serial.print("] ");

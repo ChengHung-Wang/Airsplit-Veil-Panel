@@ -6,42 +6,36 @@
 #include "shared/mesh/MeshRegistry.h"
 
 namespace {
+    constexpr int kRelayPin = 7;
+    constexpr int kFan1FgPin = 10;
+    constexpr int kFan1PwmPin = 20;
+    constexpr int kFan2FgPin = 21;
+    constexpr int kFan2PwmPin = 9;
+    constexpr uint32_t kPwmFreq = 25000;
+    constexpr uint8_t kPwmResolution = 8;
+    constexpr bool kPwmInvert = false;
 
-constexpr int kRelayPin = 7;
-constexpr int kFan1FgPin = 10;
-constexpr int kFan1PwmPin = 20;
-constexpr int kFan2FgPin = 21;
-constexpr int kFan2PwmPin = 9;
-constexpr uint32_t kPwmFreq = 25000;
-constexpr uint8_t kPwmResolution = 8;
-constexpr bool kPwmInvert = false;
+    FanController fan1("Front", kFan1FgPin, kFan1PwmPin, kPwmFreq, kPwmResolution, kPwmInvert);
+    FanController fan2("Rear", kFan2FgPin, kFan2PwmPin, kPwmFreq, kPwmResolution, kPwmInvert);
+    RelayController relay(kRelayPin);
+    mesh::MeshRegistry registry;
+    FansNodeApp app(fan1, fan2, relay, registry);
 
-FanController fan1("Front", kFan1FgPin, kFan1PwmPin, kPwmFreq, kPwmResolution, kPwmInvert);
-FanController fan2("Rear", kFan2FgPin, kFan2PwmPin, kPwmFreq, kPwmResolution, kPwmInvert);
-RelayController relay(kRelayPin);
-mesh::MeshRegistry registry;
-FansNodeApp app(fan1, fan2, relay, registry);
+    void IRAM_ATTR onFan1Pulse() {
+        app.onFan1Pulse();
+    }
 
-void IRAM_ATTR onFan1Pulse()
-{
-    app.onFan1Pulse();
-}
+    void IRAM_ATTR onFan2Pulse() {
+        app.onFan2Pulse();
+    }
+} // namespace
 
-void IRAM_ATTR onFan2Pulse()
-{
-    app.onFan2Pulse();
-}
-
-}  // namespace
-
-void setup()
-{
+void setup() {
     app.begin();
     attachInterrupt(digitalPinToInterrupt(kFan1FgPin), onFan1Pulse, FALLING);
     attachInterrupt(digitalPinToInterrupt(kFan2FgPin), onFan2Pulse, FALLING);
 }
 
-void loop()
-{
+void loop() {
     app.loop(millis());
 }

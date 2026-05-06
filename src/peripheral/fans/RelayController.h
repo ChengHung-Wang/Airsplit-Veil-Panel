@@ -7,8 +7,11 @@ public:
     explicit RelayController(int pin);
 
     void begin();
+
     void enable();
+
     void disable();
+
     bool isEnabled() const;
 
 private:

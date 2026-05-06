@@ -7,18 +7,29 @@
 class PanelView {
 public:
     void begin();
+
     void render(const AppState &state);
 
 private:
     void setPowerOff(bool powerOff);
-    void renderTemperatureMode(int temperature, const lv_img_dsc_t *icon, lv_color_t iconColor, bool showLightUnderline);
+
+    void renderTemperatureMode(int temperature, const lv_img_dsc_t *icon, lv_color_t iconColor,
+                               bool showLightUnderline);
+
     void renderLightMode(const AppState &state);
+
     void renderWaterMode(const AppState &state);
+
     void renderWindMode(const AppState &state);
+
     void setIcon(const lv_img_dsc_t *icon, lv_color_t color, bool recolorEnabled = true);
+
     void setProgress(float progressRatio, bool visible);
+
     void setTemperatureArc(int temperature, bool visible);
+
     void setTemperatureScaleVisible(bool visible);
+
     void animateArcTo(lv_obj_t *arc, int &currentValue, int targetValue, uint32_t durationMs);
 
     bool initialized_ = false;

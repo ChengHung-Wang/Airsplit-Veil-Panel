@@ -1,7 +1,6 @@
 #include "input/InputRouter.h"
 
-bool InputRouter::enqueue(const InputEvent &event)
-{
+bool InputRouter::enqueue(const InputEvent &event) {
     portENTER_CRITICAL(&queueMux_);
     const size_t nextTail = (tail_ + 1U) % kQueueSize;
     if (nextTail == head_) {
@@ -15,38 +14,31 @@ bool InputRouter::enqueue(const InputEvent &event)
     return true;
 }
 
-bool InputRouter::enqueue(InputEventType type)
-{
+bool InputRouter::enqueue(InputEventType type) {
     return enqueue(InputEvent{type, InputEventSource::Local});
 }
 
-void InputRouter::emitKnobLeft()
-{
+void InputRouter::emitKnobLeft() {
     enqueue(InputEventType::KnobLeft);
 }
 
-void InputRouter::emitKnobRight()
-{
+void InputRouter::emitKnobRight() {
     enqueue(InputEventType::KnobRight);
 }
 
-void InputRouter::emitSelectPress()
-{
+void InputRouter::emitSelectPress() {
     enqueue(InputEventType::SelectPress);
 }
 
-void InputRouter::emitPowerToggle()
-{
+void InputRouter::emitPowerToggle() {
     enqueue(InputEventType::PowerToggle);
 }
 
-void InputRouter::emitPowerOff()
-{
+void InputRouter::emitPowerOff() {
     enqueue(InputEventType::PowerOff);
 }
 
-bool InputRouter::dequeue(InputEvent &event)
-{
+bool InputRouter::dequeue(InputEvent &event) {
     portENTER_CRITICAL(&queueMux_);
     if (head_ == tail_) {
         portEXIT_CRITICAL(&queueMux_);
@@ -59,21 +51,19 @@ bool InputRouter::dequeue(InputEvent &event)
     return true;
 }
 
-InputRouter::SerialState *InputRouter::getSerialState(InputEventSource source)
-{
+InputRouter::SerialState *InputRouter::getSerialState(InputEventSource source) {
     switch (source) {
-    case InputEventSource::Uart0:
-        return &serialStates_[0];
-    case InputEventSource::Uart1:
-        return &serialStates_[1];
-    case InputEventSource::Local:
-    default:
-        return nullptr;
+        case InputEventSource::Uart0:
+            return &serialStates_[0];
+        case InputEventSource::Uart1:
+            return &serialStates_[1];
+        case InputEventSource::Local:
+        default:
+            return nullptr;
     }
 }
 
-void InputRouter::pollSerial(Stream &serial, Print &reply, InputEventSource source)
-{
+void InputRouter::pollSerial(Stream &serial, Print &reply, InputEventSource source) {
     SerialState *state = getSerialState(source);
     if (state == nullptr) {
         return;
@@ -93,8 +83,7 @@ void InputRouter::pollSerial(Stream &serial, Print &reply, InputEventSource sour
     }
 }
 
-void InputRouter::parseLine(SerialState &state, Print &reply, InputEventSource source)
-{
+void InputRouter::parseLine(SerialState &state, Print &reply, InputEventSource source) {
     if (state.lineLength_ == 0U) {
         return;
     }

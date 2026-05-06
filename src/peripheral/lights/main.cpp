@@ -4,20 +4,16 @@
 #include "shared/mesh/MeshRegistry.h"
 
 namespace {
+    constexpr gpio_num_t kRelayPin = GPIO_NUM_7;
 
-constexpr gpio_num_t kRelayPin = GPIO_NUM_7;
+    mesh::MeshRegistry registry;
+    LightNodeApp app(registry, kRelayPin);
+} // namespace
 
-mesh::MeshRegistry registry;
-LightNodeApp app(registry, kRelayPin);
-
-}  // namespace
-
-void setup()
-{
+void setup() {
     app.begin();
 }
 
-void loop()
-{
+void loop() {
     app.loop(millis());
 }

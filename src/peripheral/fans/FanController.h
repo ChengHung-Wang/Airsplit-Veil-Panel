@@ -7,12 +7,17 @@ public:
     FanController(const String &name, int fgPin, int pwmPin, uint32_t pwmFreq, uint8_t pwmResolution, bool invertPwm);
 
     void begin();
+
     void onPulse();
+
     void writeDuty(int percent);
+
     void updateRpmEverySecond(uint8_t pulsesPerRev);
 
     const String &name() const;
+
     int dutyPercent() const;
+
     uint32_t rpm() const;
 
 private:
