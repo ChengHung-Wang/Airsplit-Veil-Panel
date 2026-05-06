@@ -15,6 +15,7 @@ public:
     void onMeshSendComplete(const uint8_t mac[6], bool success) override;
 
 private:
+    void initRelayPin();
     void setEnabled(bool enabled);
     void sendStatus(uint32_t requestId);
     void announceIdentity();
