@@ -95,7 +95,7 @@
     #if !defined(ESP_PANEL_BOARD_FILE_SKIP)
         #if ESP_PANEL_BOARD_CUSTOM_FILE_VERSION_MINOR < ESP_PANEL_BOARD_CUSTOM_VERSION_MINOR
             #warning "The file `ESP_Panel_Board_Custom.h` version is outdated. Some new configurations are missing"
-        #elif ESP_PANEL_BOARD_CUSTOM_FILE_VERSION_MINOR > ESP_PANEL_BOARD_CUSTOM_VERSION_PATCH
+        #elif ESP_PANEL_BOARD_CUSTOM_FILE_VERSION_MINOR > ESP_PANEL_BOARD_CUSTOM_VERSION_MINOR
             #warning "The file `ESP_Panel_Board_Custom.h` version is newer than the library. Some new configurations are not supported"
         #endif
     #endif
