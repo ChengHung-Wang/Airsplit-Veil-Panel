@@ -22,11 +22,11 @@ AirSplit 以「氣流即隔間」為核心概念，挑戰傳統浴室必須依�
 
 ## 圖像
 
-| 首圖 | 風幕情境示意 |
+| 風幕情境示意 | 控制面板(Panel) |
 |---|---|
 | ![風幕情境](docs/images/detail-4.jpg) | ![控制面板(Panel)](docs/images/detail-3.jpg) |
 
-| 控制面板 | 結構細節 1 |
+| 結構細節1 | 結構細節 2 |
 |---|---|
 | ![縮圖](docs/images/detail-2.jpg) | ![結構細節 1](docs/images/detail-1.jpg) |
 
@@ -80,7 +80,6 @@ src/
 ## Build
 
 本專案使用 PlatformIO。
-
 在開始之前，請先安裝 PlatformIO。
 
 ### Build Panel Firmware
@@ -97,24 +96,22 @@ pio run -e Peripheral-Key
 pio run -e Peripheral-Lights
 ```
 
-## 協作背景
+## 貢獻
 
 ### 設計端
 
 問題定義/產品語言/使用者體驗/空間與氛圍意圖
 
-### 工程端負責（me）
-
-互動功能實作/韌體架構設計/硬體通訊/即時控制與回饋
-
-## 作者（Designer）
-
-### 林鋒殷 Feng-Yin Lin
+#### 林鋒殷 Feng-Yin Lin
 
 - Email：`linfengyin186@gmail.com`
 - Instagram：`@lazy_crocodile`
 
-### 陳玥彤 Yueh-Tung Chen
+#### 陳玥彤 Yueh-Tung Chen
 
 - Email：`0525yueh@gmail.com`
 - Instagram：`@_cyt_chen`
+
+### 工程端（me）
+
+互動功能實作/韌體架構設計/硬體通訊/即時控制與回饋
