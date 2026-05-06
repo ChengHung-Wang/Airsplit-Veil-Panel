@@ -55,7 +55,7 @@ AirSplit 以「氣流即隔間」為核心概念，挑戰傳統浴室必須依�
   - Seeed XIAO ESP32-C6: 接收 Panel 的指示，來控制DCDC模塊的使能引腳達成對 LED 的開關
   - LED xN
   - DCDC Module with enable pin
-- `Peripheral-shared/mesh`：
+- `shared/mesh`：
   - 所有節點共用的訊息格式、註冊表與 ESP-NOW 通訊層。
   - 主要實作 Panel 與 Fans, Key, Lights 周邊的通訊。
 
@@ -99,7 +99,9 @@ pio run -e Peripheral-Lights
 
 ### 設計端
 
-問題定義/產品語言/使用者體驗/空間與氛圍意圖
+- 產品設計
+  - 外觀、操作流程、LoFi UI、icon
+- 使用者體驗、人因工程
 
 #### 林鋒殷 Feng-Yin Lin
 
@@ -113,4 +115,6 @@ pio run -e Peripheral-Lights
 
 ### 工程端（me）
 
-互動功能實作/韌體架構設計/硬體通訊/即時控制與回饋
+- HiFi UI
+- 韌體開發、電路規劃
+- 互動功能實作
