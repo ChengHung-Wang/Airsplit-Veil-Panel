@@ -10,6 +10,8 @@ public:
 
     void render(const AppState &state);
 
+    void setIdleDimPercent(uint8_t dimPercent, uint32_t durationMs);
+
 private:
     void setPowerOff(bool powerOff);
 
@@ -32,8 +34,11 @@ private:
 
     void animateArcTo(lv_obj_t *arc, int &currentValue, int targetValue, uint32_t durationMs);
 
+    void animateOverlayOpacityTo(lv_opa_t targetOpacity, uint32_t durationMs);
+
     bool initialized_ = false;
     lv_obj_t *screen_ = nullptr;
+    lv_obj_t *idleDimOverlay_ = nullptr;
     lv_obj_t *temperatureArc_ = nullptr;
     lv_obj_t *centerLabel_ = nullptr;
     lv_obj_t *leftLabel_ = nullptr;
@@ -41,6 +46,7 @@ private:
     lv_obj_t *iconImage_ = nullptr;
     lv_obj_t *lightUnderline_ = nullptr;
     lv_obj_t *windProgressArc_ = nullptr;
+    lv_opa_t currentDimOverlayOpacity_ = LV_OPA_TRANSP;
     int currentTemperatureArcValue_ = 1;
     int currentWindArcValue_ = 1000;
 };

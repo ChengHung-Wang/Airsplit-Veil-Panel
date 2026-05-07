@@ -32,7 +32,13 @@ public:
 
     void printStatus(Print &out, uint32_t nowMs);
 
+    void notifyScreenActivity(uint32_t nowMs);
+
 private:
+    void markUserActivity(uint32_t nowMs);
+
+    void setDisplayDimmed(bool dimmed);
+
     void handleKnobDelta(int delta, uint32_t nowMs);
 
     void handleSelectPress(uint32_t nowMs);
@@ -100,6 +106,8 @@ private:
     };
 
     bool renderDirty_ = false;
+    bool dimDirty_ = false;
+    bool displayDimmed_ = false;
     bool displayOffPending_ = false;
     bool temperatureSavePending_ = false;
     bool fanTimerSavePending_ = false;
@@ -114,6 +122,7 @@ private:
     uint32_t zeroReachedAtMs_ = 0;
     uint32_t lastStatusBroadcastAtMs_ = 0;
     uint32_t lastAcceptedRemoteKeyAtMs_ = 0;
+    uint32_t lastUserActivityAtMs_ = 0;
     uint32_t nextRequestId_ = 1;
     PeripheralSnapshot snapshots_[mesh::kRegistrySeedCount] = {};
 };

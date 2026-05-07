@@ -1,6 +1,7 @@
 #include "AppController.h"
 
 #include "config/lvgl_port_v8.h"
+#include "config/ScreenIdleDimmingConfig.h"
 
 namespace {
     constexpr uint32_t kBlinkIntervalMs = 500;
@@ -46,11 +47,13 @@ void AppController::begin() {
     state_.fanRemainingSeconds = state_.fanTimerSeconds;
     state_.windAdjustCandidateSeconds = state_.fanTimerSeconds;
     state_.fanLevel = savedFanLevel_;
+    lastUserActivityAtMs_ = millis();
 
     applyDisplayPower(true);
     lvgl_port_lock(-1);
     view_.begin();
     view_.render(state_);
+    view_.setIdleDimPercent(0, 0);
     lvgl_port_unlock();
 
     announceIdentity();
@@ -58,6 +61,10 @@ void AppController::begin() {
 }
 
 void AppController::handleEvent(const InputEvent &event, uint32_t nowMs) {
+    if (event.type != InputEventType::StatusRequest) {
+        markUserActivity(nowMs);
+    }
+
     switch (event.type) {
         case InputEventType::PowerToggle:
             setPower(!state_.powerOn, nowMs);
@@ -191,7 +198,14 @@ void AppController::update(uint32_t nowMs) {
     }
 
     if (!state_.powerOn) {
+        setDisplayDimmed(false);
         return;
+    }
+
+    if (ScreenIdleDimmingConfig::kEnabled) {
+        setDisplayDimmed((nowMs - lastUserActivityAtMs_) >= ScreenIdleDimmingConfig::kIdleDelayMs);
+    } else {
+        setDisplayDimmed(false);
     }
 
     if (state_.currentMode == AppMode::Wind) {
@@ -223,19 +237,46 @@ void AppController::update(uint32_t nowMs) {
 }
 
 void AppController::renderIfNeeded() {
-    if (!renderDirty_) {
+    if (!renderDirty_ && !dimDirty_) {
         return;
     }
 
     lvgl_port_lock(-1);
-    view_.render(state_);
+    if (renderDirty_) {
+        view_.render(state_);
+    }
+    if (dimDirty_) {
+        view_.setIdleDimPercent(
+            displayDimmed_ ? ScreenIdleDimmingConfig::kDimPercent : 0,
+            ScreenIdleDimmingConfig::kTransitionDurationMs
+        );
+    }
     lvgl_port_unlock();
     renderDirty_ = false;
+    dimDirty_ = false;
 
     if (displayOffPending_) {
         applyDisplayPower(false);
         displayOffPending_ = false;
     }
+}
+
+void AppController::notifyScreenActivity(uint32_t nowMs) {
+    markUserActivity(nowMs);
+}
+
+void AppController::markUserActivity(uint32_t nowMs) {
+    lastUserActivityAtMs_ = nowMs;
+    setDisplayDimmed(false);
+}
+
+void AppController::setDisplayDimmed(bool dimmed) {
+    if (displayDimmed_ == dimmed) {
+        return;
+    }
+
+    displayDimmed_ = dimmed;
+    dimDirty_ = true;
 }
 
 void AppController::handleKnobDelta(int delta, uint32_t nowMs) {
@@ -295,6 +336,10 @@ void AppController::handleSelectPress(uint32_t nowMs) {
 }
 
 void AppController::enterMode(AppMode mode, uint32_t nowMs) {
+    if (state_.currentMode != mode) {
+        markUserActivity(nowMs);
+    }
+
     state_.currentMode = mode;
     state_.windAdjusting = false;
     state_.windAdjustmentBlinkOn = true;
@@ -324,6 +369,7 @@ void AppController::setPower(bool powerOn, uint32_t nowMs) {
     zeroReachedAtMs_ = 0;
 
     if (powerOn) {
+        markUserActivity(nowMs);
         applyDisplayPower(true);
         state_.currentMode = AppMode::Idle;
         state_.fanRemainingSeconds = state_.fanTimerSeconds;
@@ -331,6 +377,7 @@ void AppController::setPower(bool powerOn, uint32_t nowMs) {
         lastWindTickAtMs_ = nowMs;
         state_.fanLevel = 0;
     } else {
+        setDisplayDimmed(false);
         state_.currentMode = AppMode::Idle;
         state_.fanLevel = 0;
         displayOffPending_ = true;

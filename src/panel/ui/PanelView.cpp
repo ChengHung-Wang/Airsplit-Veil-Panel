@@ -37,6 +37,10 @@ namespace {
         lv_arc_set_value(static_cast<lv_obj_t *>(obj), static_cast<int16_t>(value));
     }
 
+    void setOpacityExec(void *obj, int32_t value) {
+        lv_obj_set_style_bg_opa(static_cast<lv_obj_t *>(obj), static_cast<lv_opa_t>(value), 0);
+    }
+
     const lv_img_dsc_t *windIconForFanLevel(uint8_t fanLevel) {
         switch (fanLevel) {
             case 1:
@@ -139,6 +143,15 @@ void PanelView::begin() {
     lv_obj_set_style_img_recolor_opa(iconImage_, LV_OPA_COVER, 0);
     lv_obj_set_style_transition(iconImage_, &transition, 0);
 
+    idleDimOverlay_ = lv_obj_create(screen_);
+    lv_obj_remove_style_all(idleDimOverlay_);
+    lv_obj_set_size(idleDimOverlay_, lv_pct(100), lv_pct(100));
+    lv_obj_align(idleDimOverlay_, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_bg_color(idleDimOverlay_, lv_color_black(), 0);
+    lv_obj_set_style_bg_opa(idleDimOverlay_, LV_OPA_TRANSP, 0);
+    lv_obj_clear_flag(idleDimOverlay_, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_move_foreground(idleDimOverlay_);
+
     // The light mode underline design is removed in the current UI design, but we keep the code here for easy re-enable in the future if needed.
     // --------
     // lightUnderline_ = lv_obj_create(screen_);
@@ -151,6 +164,18 @@ void PanelView::begin() {
 
     lv_scr_load(screen_);
     initialized_ = true;
+}
+
+void PanelView::setIdleDimPercent(uint8_t dimPercent, uint32_t durationMs) {
+    if (!initialized_) {
+        begin();
+    }
+
+    const uint8_t clampedPercent = (dimPercent > 100U) ? 100U : dimPercent;
+    const lv_opa_t targetOpacity = static_cast<lv_opa_t>(
+        (static_cast<uint32_t>(clampedPercent) * static_cast<uint32_t>(LV_OPA_COVER)) / 100U
+    );
+    animateOverlayOpacityTo(targetOpacity, durationMs);
 }
 
 void PanelView::render(const AppState &state) {
@@ -316,4 +341,29 @@ void PanelView::animateArcTo(lv_obj_t *arc, int &currentValue, int targetValue, 
     lv_anim_start(&animation);
 
     currentValue = targetValue;
+}
+
+void PanelView::animateOverlayOpacityTo(lv_opa_t targetOpacity, uint32_t durationMs) {
+    if (idleDimOverlay_ == nullptr) {
+        return;
+    }
+
+    lv_anim_del(idleDimOverlay_, setOpacityExec);
+
+    if ((durationMs == 0U) || (currentDimOverlayOpacity_ == targetOpacity)) {
+        lv_obj_set_style_bg_opa(idleDimOverlay_, targetOpacity, 0);
+        currentDimOverlayOpacity_ = targetOpacity;
+        return;
+    }
+
+    lv_anim_t animation;
+    lv_anim_init(&animation);
+    lv_anim_set_var(&animation, idleDimOverlay_);
+    lv_anim_set_exec_cb(&animation, setOpacityExec);
+    lv_anim_set_values(&animation, currentDimOverlayOpacity_, targetOpacity);
+    lv_anim_set_time(&animation, durationMs);
+    lv_anim_set_path_cb(&animation, lv_anim_path_ease_in_out);
+    lv_anim_start(&animation);
+
+    currentDimOverlayOpacity_ = targetOpacity;
 }
