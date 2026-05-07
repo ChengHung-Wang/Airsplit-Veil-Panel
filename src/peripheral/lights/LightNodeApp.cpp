@@ -107,10 +107,7 @@ void LightNodeApp::notePanelLinked(const mesh::MeshMessage &message) {
 }
 
 bool LightNodeApp::sendToPanel(const mesh::MeshMessage &message) {
-    if (panelLinked_ &&network_
-    .
-    sendToNode(mesh::NodeRole::Panel, 1, message)
-    )
+    if (panelLinked_ &&network_.sendToNode(mesh::NodeRole::Panel, 1, message))
     {
         return true;
     }

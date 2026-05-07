@@ -114,6 +114,7 @@
 #define ESP_PANEL_LCD_RGB_BOUNCE_BUF_SIZE   (0)     // Bounce buffer size in bytes. This function is used to avoid screen drift.
 
 
+
 // To enable the bounce buffer, set it to a non-zero value. Typically set to `ESP_PANEL_LCD_WIDTH * 10`
 // The size of the Bounce Buffer must satisfy `width_of_lcd * height_of_lcd = size_of_buffer * N`,
 // where N is an even number.
@@ -162,6 +163,7 @@
 
 #define ESP_PANEL_LCD_MIPI_DSI_LANE_NUM         (2)     // ESP32-P4 supports 1 or 2 lanes
 #define ESP_PANEL_LCD_MIPI_DSI_LANE_RATE_MBPS   (1000)  // Single lane bit rate, should consult the LCD supplier or check the
+
 
 
 // LCD drive IC datasheet for the supported lane rate.

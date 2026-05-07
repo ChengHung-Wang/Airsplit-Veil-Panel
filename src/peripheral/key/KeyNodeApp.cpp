@@ -127,12 +127,7 @@ void KeyNodeApp::notePanelLinked(const mesh::MeshMessage &message) {
 }
 
 bool KeyNodeApp::sendToPanel(const mesh::MeshMessage &message) {
-    if (panelLinked_ &&network_
-
-    .
-    sendToNode(mesh::NodeRole::Panel, 1, message)
-    )
-    {
+    if (panelLinked_ &&network_.sendToNode(mesh::NodeRole::Panel, 1, message)) {
         return true;
     }
     return network_.sendToRole(mesh::NodeRole::Panel, message);

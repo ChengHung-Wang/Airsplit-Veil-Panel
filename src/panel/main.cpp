@@ -1,13 +1,13 @@
-#include "PanelRuntime.h"
+#include "app/PanelApplication.h"
 
 namespace {
-    PanelRuntime g_runtime;
+    PanelApplication g_app;
 }
 
 void setup() {
-    g_runtime.setup();
+    g_app.boot();
 }
 
 void loop() {
-    g_runtime.loop();
+    g_app.runOnce();
 }
