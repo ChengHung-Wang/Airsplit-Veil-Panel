@@ -6,7 +6,12 @@
 
 class LightNodeApp : public mesh::EspNowNetwork::Listener {
 public:
-    LightNodeApp(mesh::MeshRegistry &registry, gpio_num_t relayPin);
+    LightNodeApp(
+        mesh::MeshRegistry &registry,
+        gpio_num_t relayPin,
+        gpio_num_t statusLedPin,
+        gpio_num_t toggleButtonPin
+    );
 
     void begin();
 
@@ -19,6 +24,14 @@ public:
 private:
     void initRelayPin();
 
+    void initStatusLedPin();
+
+    void initToggleButtonPin();
+
+    void updateStatusLed(uint32_t nowMs);
+
+    void updateToggleButton(uint32_t nowMs);
+
     void setEnabled(bool enabled);
 
     void sendStatus(uint32_t requestId);
@@ -29,6 +42,12 @@ private:
 
     bool sendToPanel(const mesh::MeshMessage &message);
 
+    bool isPanelConnected() const;
+
+    uint8_t breathingDuty(uint32_t nowMs) const;
+
+    void writeStatusLed(uint8_t duty);
+
     void logMesh(const char *direction, const mesh::MeshMessage &message);
 
     uint32_t nextRequestId();
@@ -36,7 +55,12 @@ private:
     mesh::MeshRegistry &registry_;
     mesh::EspNowNetwork network_;
     gpio_num_t relayPin_;
+    gpio_num_t statusLedPin_;
+    gpio_num_t toggleButtonPin_;
     bool enabled_ = false;
     uint32_t nextRequestId_ = 1;
     bool panelLinked_ = false;
+    bool buttonStableLow_ = false;
+    bool buttonLastSampleLow_ = false;
+    uint32_t buttonLastChangedAtMs_ = 0;
 };
