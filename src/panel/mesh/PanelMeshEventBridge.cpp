@@ -1,4 +1,4 @@
-#include "shared/mesh/PanelMeshEventBridge.h"
+#include "mesh/PanelMeshEventBridge.h"
 
 #include "app/AppController.h"
 

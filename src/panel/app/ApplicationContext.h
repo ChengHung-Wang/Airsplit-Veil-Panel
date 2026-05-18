@@ -8,8 +8,9 @@
 #include "AppController.h"
 #include "input/InputCallbackRegistrar.h"
 #include "input/InputRouter.h"
+#include "mesh/PanelMeshEventBridge.h"
 #include "shared/mesh/MeshRegistry.h"
-#include "shared/mesh/PanelMeshEventBridge.h"
+
 
 struct PanelApplicationContext {
     ESP_Panel *&panel;
