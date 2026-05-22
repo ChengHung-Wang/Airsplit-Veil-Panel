@@ -43,7 +43,7 @@ AirSplit 以「氣流即隔間」為核心概念，挑戰傳統浴室必須依�
   - 1.5inch 466x466 OLED Touch Screen
   - 帶按鈕的編碼器
 - `Peripheral-Fans`：送風電機
-  - Seeed XIAO ESP32-C6: 電源/轉速控制、狀態回報(via ESP-NOW/Bluetooth LE, Dual Interface)
+  - ESP32-C3 Super Mini: 電源/轉速控制、狀態回報(via ESP-NOW/Bluetooth LE, Dual Interface)
   - Delta GFC0812DW x1
   - 3.3V Relay Module x1
   - DCDC Module(12V-5V) x1
@@ -52,7 +52,7 @@ AirSplit 以「氣流即隔間」為核心概念，挑戰傳統浴室必須依�
   - Seeed XIAO ESP32-C6: 在按鈕被按下時，透過 ESP-NOW 向 Panel 發送訊號。
   - Push-Button x4，分別為電源、水、燈、風。
 - `Peripheral-Lights`：燈光邊界提示(提示風刀的位置)
-  - Seeed XIAO ESP32-C6: 接收 Panel 的指示，來控制DCDC模塊的使能引腳達成對 LED 的開關
+  - Seeed XIAO ESP32-C5: 接收 Panel 的指示，來控制DCDC模塊的使能引腳達成對 LED 的開關
   - LED xN
   - DCDC Module with enable pin
 - `shared/mesh`：
