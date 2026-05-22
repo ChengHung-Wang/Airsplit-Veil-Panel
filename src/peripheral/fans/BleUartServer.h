@@ -19,6 +19,8 @@ public:
 
     void begin(const char *deviceName);
 
+    void poll(uint32_t nowMs);
+
     void notifyLine(const String &message);
 
     void handleConnectionChanged(bool connected);
@@ -26,7 +28,11 @@ public:
     void handleIncomingCommand(const String &command);
 
 private:
+    void startAdvertising();
+
     Listener &listener_;
     BLECharacteristic *txCharacteristic_ = nullptr;
+    uint32_t lastPollMs_ = 0;
     bool connected_ = false;
+    bool started_ = false;
 };
