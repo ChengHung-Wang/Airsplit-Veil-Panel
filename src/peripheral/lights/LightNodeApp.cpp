@@ -1,20 +1,11 @@
 #include "LightNodeApp.h"
 
 #include <driver/gpio.h>
-#include <math.h>
 
 namespace {
     constexpr uint8_t kNodeId = 1;
     constexpr uint64_t kGpioPinMaskBase = 1ULL;
-    constexpr uint32_t kStatusLedPwmFreq = 1000;
-    constexpr uint8_t kStatusLedPwmResolution = 8;
-    constexpr uint8_t kStatusLedDutyMax = 255;
-    constexpr uint32_t kStatusLedUpdateIntervalMs = 16;
-    constexpr uint32_t kBreathingPeriodMs = 3200;
-    constexpr uint32_t kConnectedBlinkPeriodMs = 1050;
-    constexpr uint32_t kConnectedBlinkOffMs = 1000;
     constexpr uint32_t kButtonDebounceMs = 35;
-    constexpr float kPi = 3.14159265358979323846F;
     constexpr bool kStatusLedActiveLow = true;
 } // namespace
 
@@ -26,8 +17,8 @@ LightNodeApp::LightNodeApp(
 )
     : registry_(registry),
       network_(registry_, mesh::NodeRole::Lights, kNodeId, *this),
+      statusLed_(statusLedPin, kStatusLedActiveLow),
       relayPin_(relayPin),
-      statusLedPin_(statusLedPin),
       toggleButtonPin_(toggleButtonPin) {
 }
 
@@ -36,7 +27,7 @@ void LightNodeApp::begin() {
     delay(200);
 
     initRelayPin();
-    initStatusLedPin();
+    statusLed_.begin();
     initToggleButtonPin();
     network_.begin();
     announceIdentity();
@@ -46,7 +37,7 @@ void LightNodeApp::begin() {
 void LightNodeApp::loop(uint32_t nowMs) {
     network_.poll(nowMs);
     updateToggleButton(nowMs);
-    updateStatusLed(nowMs);
+    statusLed_.update(nowMs, enabled_, isPanelConnected());
 }
 
 void LightNodeApp::onMeshMessageReceived(const uint8_t mac[6], const mesh::MeshMessage &message) {
@@ -91,12 +82,6 @@ void LightNodeApp::initRelayPin() {
     Serial.printf("[LIGHT GPIO] init pin=%d level=%d\r\n", relayPin_, gpio_get_level(relayPin_));
 }
 
-void LightNodeApp::initStatusLedPin() {
-    ledcAttach(statusLedPin_, kStatusLedPwmFreq, kStatusLedPwmResolution);
-    writeStatusLed(0);
-    Serial.printf("[LIGHT STATUS LED] init pin=%d\r\n", statusLedPin_);
-}
-
 void LightNodeApp::initToggleButtonPin() {
     gpio_reset_pin(toggleButtonPin_);
 
@@ -112,27 +97,6 @@ void LightNodeApp::initToggleButtonPin() {
     buttonStableLow_ = buttonLastSampleLow_;
     buttonLastChangedAtMs_ = millis();
     Serial.printf("[LIGHT BUTTON] init pin=%d active_low=%d\r\n", toggleButtonPin_, 1);
-}
-
-void LightNodeApp::updateStatusLed(uint32_t nowMs) {
-    static uint32_t lastUpdateMs = 0;
-    if ((nowMs - lastUpdateMs) < kStatusLedUpdateIntervalMs) {
-        return;
-    }
-    lastUpdateMs = nowMs;
-
-    if (enabled_) {
-        writeStatusLed(kStatusLedDutyMax);
-        return;
-    }
-
-    if (!isPanelConnected()) {
-        writeStatusLed(breathingDuty(nowMs));
-        return;
-    }
-
-    const uint32_t phaseMs = nowMs % kConnectedBlinkPeriodMs;
-    writeStatusLed(phaseMs < kConnectedBlinkOffMs ? 0 : kStatusLedDutyMax);
 }
 
 void LightNodeApp::updateToggleButton(uint32_t nowMs) {
@@ -210,20 +174,6 @@ bool LightNodeApp::isPanelConnected() const {
         }
     }
     return false;
-}
-
-uint8_t LightNodeApp::breathingDuty(uint32_t nowMs) const {
-    const float phase = static_cast<float>(nowMs % kBreathingPeriodMs) /
-        static_cast<float>(kBreathingPeriodMs);
-    const float wave = 0.5F - (0.5F * cosf(phase * 2.0F * kPi));
-    const float perceptual = powf(wave, 2.2F);
-    constexpr float kFloorDuty = 3.0F;
-    constexpr float kCeilingDuty = static_cast<float>(kStatusLedDutyMax);
-    return static_cast<uint8_t>(kFloorDuty + (perceptual * (kCeilingDuty - kFloorDuty)));
-}
-
-void LightNodeApp::writeStatusLed(uint8_t duty) {
-    ledcWrite(statusLedPin_, kStatusLedActiveLow ? (kStatusLedDutyMax - duty) : duty);
 }
 
 uint32_t LightNodeApp::nextRequestId() {

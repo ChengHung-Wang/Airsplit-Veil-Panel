@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <Button.h>
 
+#include "shared/peripheral/PeripheralStatusLed.h"
 #include "shared/mesh/EspNowNetwork.h"
 
 class KeyNodeApp : public mesh::EspNowNetwork::Listener {
@@ -13,7 +14,8 @@ public:
         gpio_num_t waterPin,
         gpio_num_t lightPin,
         gpio_num_t windPin,
-        bool activeLevel
+        bool activeLevel,
+        gpio_num_t statusLedPin = GPIO_NUM_NC
     );
 
     void begin();
@@ -29,11 +31,31 @@ private:
 
     static void onPowerLongPress(void *buttonHandle, void *userData);
 
+    static void onPowerDown(void *buttonHandle, void *userData);
+
+    static void onPowerUp(void *buttonHandle, void *userData);
+
     static void onWaterClick(void *buttonHandle, void *userData);
+
+    static void onWaterDown(void *buttonHandle, void *userData);
+
+    static void onWaterUp(void *buttonHandle, void *userData);
 
     static void onLightClick(void *buttonHandle, void *userData);
 
+    static void onLightDown(void *buttonHandle, void *userData);
+
+    static void onLightUp(void *buttonHandle, void *userData);
+
     static void onWindClick(void *buttonHandle, void *userData);
+
+    static void onWindDown(void *buttonHandle, void *userData);
+
+    static void onWindUp(void *buttonHandle, void *userData);
+
+    void setButtonPressed(uint8_t index, bool pressed);
+
+    bool anyButtonPressed() const;
 
     void emitKey(mesh::KeyCode key, mesh::KeyPressType press);
 
@@ -43,12 +65,15 @@ private:
 
     bool sendToPanel(const mesh::MeshMessage &message);
 
+    bool isPanelConnected() const;
+
     void logMesh(const char *direction, const mesh::MeshMessage &message);
 
     uint32_t nextRequestId();
 
     mesh::MeshRegistry &registry_;
     mesh::EspNowNetwork network_;
+    PeripheralStatusLed statusLed_;
     Button *powerButton_ = nullptr;
     Button *waterButton_ = nullptr;
     Button *lightButton_ = nullptr;
@@ -60,4 +85,5 @@ private:
     bool activeLevel_ = false;
     uint32_t nextRequestId_ = 1;
     bool panelLinked_ = false;
+    bool buttonPressed_[4] = {};
 };

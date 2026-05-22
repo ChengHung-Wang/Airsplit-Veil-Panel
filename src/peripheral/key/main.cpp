@@ -8,10 +8,11 @@ namespace {
     constexpr gpio_num_t kWaterPin = GPIO_NUM_21;
     constexpr gpio_num_t kLightPin = GPIO_NUM_16;
     constexpr gpio_num_t kWindPin = GPIO_NUM_22;
+    constexpr gpio_num_t kStatusLedPin = GPIO_NUM_15;
     constexpr bool kButtonActiveLevel = true;
 
     mesh::MeshRegistry registry;
-    KeyNodeApp app(registry, kPowerPin, kWaterPin, kLightPin, kWindPin, kButtonActiveLevel);
+    KeyNodeApp app(registry, kPowerPin, kWaterPin, kLightPin, kWindPin, kButtonActiveLevel, kStatusLedPin);
 } // namespace
 
 void setup() {

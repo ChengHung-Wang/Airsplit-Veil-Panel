@@ -3,39 +3,68 @@
 namespace {
     constexpr uint8_t kNodeId = 1;
     constexpr uint8_t kPulsesPerRev = 2;
+    constexpr uint32_t kNetworkStartDelayMs = 5000;
+
+    bool parsePercentCommandValue(const String &text, int &value) {
+        if (text.isEmpty()) {
+            return false;
+        }
+        for (size_t i = 0; i < text.length(); ++i) {
+            if (!isDigit(text[i])) {
+                return false;
+            }
+        }
+        value = text.toInt();
+        return (value >= 0) && (value <= 100);
+    }
 } // namespace
 
 FansNodeApp::FansNodeApp(
     FanController &fan1,
     FanController &fan2,
     RelayController &relay,
-    mesh::MeshRegistry &registry
+    mesh::MeshRegistry &registry,
+    gpio_num_t statusLedPin
 ) : fan1_(fan1),
     fan2_(fan2),
     relay_(relay),
     registry_(registry),
     ble_(*this),
-    network_(registry_, mesh::NodeRole::Fans, kNodeId, *this) {
+    network_(registry_, mesh::NodeRole::Fans, kNodeId, *this),
+    statusLed_(statusLedPin, true) {
 }
 
 void FansNodeApp::begin() {
     Serial.begin(115200);
     delay(200);
+    bootMs_ = millis();
+    Serial.println("BEGIN fan1");
 
     fan1_.begin();
+    Serial.println("BEGIN fan2");
     fan2_.begin();
+    Serial.println("BEGIN relay");
     relay_.begin();
+    Serial.println("BEGIN status led");
+    statusLed_.begin();
+    Serial.println("BEGIN ble");
     ble_.begin("AirSplit Veil Fan Controller");
-    network_.begin();
-    announceIdentity();
+    Serial.println("BEGIN help");
     printHelp();
+    Serial.println("BEGIN status");
     sendStatus(0);
 }
 
 void FansNodeApp::loop(uint32_t nowMs) {
     handleSerial();
+    ble_.poll(nowMs);
+    ensureNetworkStarted(nowMs);
+    processPendingMeshMessages();
     handleRpmUpdate(nowMs);
-    network_.poll(nowMs);
+    if (networkStarted_) {
+        network_.poll(nowMs);
+    }
+    statusLed_.update(nowMs, hasActiveFanOutput(), isPanelConnected());
 }
 
 void FansNodeApp::onFan1Pulse() {
@@ -50,28 +79,13 @@ void FansNodeApp::onMeshMessageReceived(const uint8_t mac[6], const mesh::MeshMe
     if (!mesh::targetsNode(message, mesh::NodeRole::Fans, kNodeId)) {
         return;
     }
-    logMesh("RX", message, true);
-    registry_.markSeen(mac, millis());
-    notePanelLinked(message);
-    switch (static_cast<mesh::MessageType>(message.msgType)) {
-        case mesh::MessageType::Hello:
-            break;
-        case mesh::MessageType::Cmd:
-            if (static_cast<mesh::PayloadKind>(message.payloadKind) == mesh::PayloadKind::FansSet) {
-                applyFansState(
-                    message.payload.fansSet.enable != 0,
-                    message.payload.fansSet.fan1Percent,
-                    message.payload.fansSet.fan2Percent
-                );
-                sendStatus(message.requestId);
-            }
-            break;
-        case mesh::MessageType::StatusReq:
-            sendStatus(message.requestId);
-            break;
-        default:
-            break;
+    const uint8_t nextHead = static_cast<uint8_t>((pendingMeshHead_ + 1U) % kPendingMeshCapacity);
+    if (nextHead == pendingMeshTail_) {
+        return;
     }
+    memcpy(pendingMesh_[pendingMeshHead_].mac, mac, sizeof(pendingMesh_[pendingMeshHead_].mac));
+    pendingMesh_[pendingMeshHead_].message = message;
+    pendingMeshHead_ = nextHead;
 }
 
 void FansNodeApp::onMeshSendComplete(const uint8_t mac[6], bool success) {
@@ -115,17 +129,34 @@ void FansNodeApp::processCommand(String command, bool fromMesh) {
         return;
     }
     if (command.startsWith("F1=")) {
-        applyFansState(relay_.isEnabled(), command.substring(3).toInt(), fan2_.dutyPercent());
+        int value = 0;
+        if (!parsePercentCommandValue(command.substring(3), value)) {
+            Serial.println("ERR F1 must be 0~100");
+            ble_.notifyLine("ERR F1 must be 0~100");
+            return;
+        }
+        applyFansState(relay_.isEnabled(), value, fan2_.dutyPercent());
         sendStatus(nextRequestId());
         return;
     }
     if (command.startsWith("F2=")) {
-        applyFansState(relay_.isEnabled(), fan1_.dutyPercent(), command.substring(3).toInt());
+        int value = 0;
+        if (!parsePercentCommandValue(command.substring(3), value)) {
+            Serial.println("ERR F2 must be 0~100");
+            ble_.notifyLine("ERR F2 must be 0~100");
+            return;
+        }
+        applyFansState(relay_.isEnabled(), fan1_.dutyPercent(), value);
         sendStatus(nextRequestId());
         return;
     }
     if (command.startsWith("ALL=")) {
-        const int value = command.substring(4).toInt();
+        int value = 0;
+        if (!parsePercentCommandValue(command.substring(4), value)) {
+            Serial.println("ERR ALL must be 0~100");
+            ble_.notifyLine("ERR ALL must be 0~100");
+            return;
+        }
         applyFansState(relay_.isEnabled(), value, value);
         sendStatus(nextRequestId());
         return;
@@ -153,10 +184,56 @@ void FansNodeApp::applyFansState(bool relayEnabled, int fan1Percent, int fan2Per
 }
 
 void FansNodeApp::handleSerial() {
-    if (!Serial.available()) {
-        return;
+    while (Serial.available()) {
+        const char ch = static_cast<char>(Serial.read());
+        if (ch == '\r') {
+            continue;
+        }
+        if (ch == '\n') {
+            serialBuffer_[serialLength_] = '\0';
+            processCommand(String(serialBuffer_), false);
+            serialLength_ = 0;
+            continue;
+        }
+        if (serialLength_ >= (sizeof(serialBuffer_) - 1U)) {
+            serialLength_ = 0;
+            Serial.println("ERR Command too long");
+            ble_.notifyLine("ERR Command too long");
+            continue;
+        }
+        serialBuffer_[serialLength_++] = ch;
     }
-    processCommand(Serial.readStringUntil('\n'), false);
+}
+
+void FansNodeApp::processPendingMeshMessages() {
+    while (pendingMeshTail_ != pendingMeshHead_) {
+        const PendingMeshMessage pending = pendingMesh_[pendingMeshTail_];
+        pendingMeshTail_ = static_cast<uint8_t>((pendingMeshTail_ + 1U) % kPendingMeshCapacity);
+
+        logMesh("RX", pending.message, true);
+        registry_.markSeen(pending.mac, millis());
+        notePanelLinked(pending.message);
+
+        switch (static_cast<mesh::MessageType>(pending.message.msgType)) {
+            case mesh::MessageType::Hello:
+                break;
+            case mesh::MessageType::Cmd:
+                if (static_cast<mesh::PayloadKind>(pending.message.payloadKind) == mesh::PayloadKind::FansSet) {
+                    applyFansState(
+                        pending.message.payload.fansSet.enable != 0,
+                        pending.message.payload.fansSet.fan1Percent,
+                        pending.message.payload.fansSet.fan2Percent
+                    );
+                    sendStatus(pending.message.requestId);
+                }
+                break;
+            case mesh::MessageType::StatusReq:
+                sendStatus(pending.message.requestId);
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 void FansNodeApp::handleRpmUpdate(uint32_t nowMs) {
@@ -168,13 +245,27 @@ void FansNodeApp::handleRpmUpdate(uint32_t nowMs) {
     lastRpmMs_ = nowMs;
 }
 
+void FansNodeApp::ensureNetworkStarted(uint32_t nowMs) {
+    if (networkStarted_ || ((nowMs - bootMs_) < kNetworkStartDelayMs)) {
+        return;
+    }
+    if (!network_.begin()) {
+        Serial.println("ERR ESP-NOW init failed");
+        return;
+    }
+    networkStarted_ = true;
+    Serial.println("ESP-NOW init ok");
+    announceIdentity();
+}
+
 void FansNodeApp::sendStatus(uint32_t requestId) {
+    const bool fanEnabled = relay_.isEnabled() && ((fan1_.dutyPercent() > 0) || (fan2_.dutyPercent() > 0));
     const mesh::MeshMessage message = mesh::makeFansStatusMessage(
         mesh::NodeRole::Fans,
         kNodeId,
         requestId == 0 ? nextRequestId() : requestId,
         relay_.isEnabled(),
-        relay_.isEnabled(),
+        fanEnabled,
         fan1_.dutyPercent(),
         fan2_.dutyPercent(),
         fan1_.rpm(),
@@ -207,6 +298,25 @@ bool FansNodeApp::sendToPanel(const mesh::MeshMessage &message) {
         return true;
     }
     return network_.sendToRole(mesh::NodeRole::Panel, message);
+}
+
+bool FansNodeApp::isPanelConnected() const {
+    for (size_t i = 0; i < registry_.size(); ++i) {
+        const mesh::RegistryEntry *entry = registry_.entryAt(i);
+        if ((entry == nullptr) || !entry->configured || !entry->online) {
+            continue;
+        }
+        const mesh::NodeRole effectiveRole =
+            entry->reportedRole != mesh::NodeRole::Unknown ? entry->reportedRole : entry->roleHint;
+        if (effectiveRole == mesh::NodeRole::Panel) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool FansNodeApp::hasActiveFanOutput() const {
+    return relay_.isEnabled() && ((fan1_.dutyPercent() >= 15) || (fan2_.dutyPercent() >= 15));
 }
 
 String FansNodeApp::statusString() const {

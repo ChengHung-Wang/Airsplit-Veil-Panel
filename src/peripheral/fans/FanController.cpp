@@ -27,9 +27,10 @@ void FanController::onPulse() {
 
 void FanController::writeDuty(int percent) {
     dutyPercent_ = constrain(percent, 0, 100);
-    int pwmValue = map(dutyPercent_, 0, 100, 0, 255);
+    const uint32_t pwmMax = (1UL << pwmResolution_) - 1UL;
+    int pwmValue = map(dutyPercent_, 0, 100, 0, static_cast<int>(pwmMax));
     if (invertPwm_) {
-        pwmValue = 255 - pwmValue;
+        pwmValue = static_cast<int>(pwmMax) - pwmValue;
     }
     ledcWrite(pwmPin_, pwmValue);
 }

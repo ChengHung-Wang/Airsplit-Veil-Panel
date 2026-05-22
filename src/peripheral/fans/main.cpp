@@ -11,6 +11,7 @@ namespace {
     constexpr int kFan1PwmPin = 20;
     constexpr int kFan2FgPin = 21;
     constexpr int kFan2PwmPin = 9;
+    constexpr gpio_num_t kStatusLedPin = GPIO_NUM_8;
     constexpr uint32_t kPwmFreq = 25000;
     constexpr uint8_t kPwmResolution = 8;
     constexpr bool kPwmInvert = false;
@@ -19,7 +20,7 @@ namespace {
     FanController fan2("Rear", kFan2FgPin, kFan2PwmPin, kPwmFreq, kPwmResolution, kPwmInvert);
     RelayController relay(kRelayPin);
     mesh::MeshRegistry registry;
-    FansNodeApp app(fan1, fan2, relay, registry);
+    FansNodeApp app(fan1, fan2, relay, registry, kStatusLedPin);
 
     void IRAM_ATTR onFan1Pulse() {
         app.onFan1Pulse();

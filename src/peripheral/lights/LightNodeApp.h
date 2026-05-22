@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 
+#include "shared/peripheral/PeripheralStatusLed.h"
 #include "shared/mesh/EspNowNetwork.h"
 
 class LightNodeApp : public mesh::EspNowNetwork::Listener {
@@ -24,11 +25,7 @@ public:
 private:
     void initRelayPin();
 
-    void initStatusLedPin();
-
     void initToggleButtonPin();
-
-    void updateStatusLed(uint32_t nowMs);
 
     void updateToggleButton(uint32_t nowMs);
 
@@ -44,18 +41,14 @@ private:
 
     bool isPanelConnected() const;
 
-    uint8_t breathingDuty(uint32_t nowMs) const;
-
-    void writeStatusLed(uint8_t duty);
-
     void logMesh(const char *direction, const mesh::MeshMessage &message);
 
     uint32_t nextRequestId();
 
     mesh::MeshRegistry &registry_;
     mesh::EspNowNetwork network_;
+    PeripheralStatusLed statusLed_;
     gpio_num_t relayPin_;
-    gpio_num_t statusLedPin_;
     gpio_num_t toggleButtonPin_;
     bool enabled_ = false;
     uint32_t nextRequestId_ = 1;
